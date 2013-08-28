@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
+				pageTitle="Collective Bid Optimizer">
+	
+	<mx:Script>
+		<![CDATA[
+			import flash.events.MouseEvent;
+			
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.events.ListEvent;
+			import mx.rpc.Fault;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			private static const URL_REFRESH_SPREADSHEET:String = "/cbo/secure/services/refreshSpreadsheet.action";
+			private static const URL_INSPECTOR_PAGE:String = "/cbo/secure/services/showZiniObject.action";
+			private static const URL_DEBUG_PAGE:String = "/cbo/secure/zini/debug/status/";
+			private static const URL_LIST_LOG_FILES:String = "/cbo/secure/services/getLogFileNames.action";
+			private static const URL_LOGIN:String = "/cbo/login.jsp"
+			private static const URL_LOGOUT:String = "/cbo/logout.action";
+			private static const URL_DOWNLOAD_LOG_FILE:String = "/cbo/secure/services/getLogFile.action";
+			private static const URL_DOWNLOAD_SPREADSHEET:String = "/cbo/secure/services/getCampaignSummary.action";
+			private static const URL_UPLOAD_SPREADSHEET:String = "/cbo/secure/services/setCampaignSummary.action";
+			private static const URL_UPLOAD_SPREADSHEET_PAGE:String = "/cbo/secure/view/jsp/upload.jsp";
+
+			// The name argument to the log file downloader.
+			private static const LOG_FILE_NAME_ARG:String = "?name=";
+			
+			// The name parameter for today's log file
+			private static const TODAYS_LOG_FILE_NAME:String = "cbo.log";
+			
+			// Browser pages
+			public static const PAGE_SELF:String = "_self";
+			public static const PAGE_BLANK:String = "_blank";
+			public static const PAGE_HELP:String = "help";
+			public static const PAGE_AUX:String = "aux";
+			
+			// -------------------------- Copied from TRS ------------------------
+			
+			// Only used for isResultOK().
+			private static const MSG_SESSION_EXIPIRED:String = "The session has expired. Please login.";
+			private static const MSG_APPLICATION_ERROR:String = "Application encountered an error.  " +
+				"Please contact your Tumri support representative.  " +
+				"Details: " ;
+			private static const MSG_LOG_LIST_DATA_LOAD_ERROR:String = "Error loading list of log files";
+			private static const MSG_LOGOUT_ERROR:String = "Error logging out";
+
+			// Title of the session expired dialog.
+			private static const TITLE_SESSION_EXPIRED:String = "Session Expired";
+			
+			private static const ERROR_TAG_NAME:String = "error";
+			private static const HTTP_UNAUTHORIZED:int = 401;
+			private static const HTTP_SERVER_ERROR:int = 500;
+			
+			
+			// File upload
+			private var uploadURL:URLRequest;
+			private var file:FileReference;
+			
+			// Log file list
+			[Bindable]
+			private var m_logFiles:XMLList = null;
+				
+			private var m_disabledCount:int = 0;
+			
+			// -------------------------------------------------------------
+			
+			private function spreadsheetRefreshSuccess(ev:ResultEvent):void {
+				setUserInputEnabled(true);
+				if(isResponseOK(ev, this)) {
+					Alert.show("Spreadsheet has been refreshed.");
+				}
+			}
+			
+			private function spreadsheetRefreshFailure(e:FaultEvent):void {
+				// Assume a session timeout if this happens.
+				Alert.show(MSG_SESSION_EXIPIRED, TITLE_SESSION_EXPIRED, Alert.OK, this, handleSessionExpired);
+			}
+
+			private function handleRefreshButtonClicked(event:MouseEvent):void {
+				callService(spreadsheetRefreshService, URL_REFRESH_SPREADSHEET);
+			}
+
+			/** Calls the appropriate service with the cache buster.
+			 * @param svc The service.
+			 * @param url The URL.
+			 */
+			private function callService(svc:HTTPService, url:String):void {
+				var cacheBuster:Date = new Date();
+				svc.url = url + "?dt=" + cacheBuster.valueOf();
+				setUserInputEnabled(false);
+				svc.send();
+			}
+			
+			private function handleDebugButtonClicked(event:MouseEvent):void {
+				showURL(URL_DEBUG_PAGE);
+			}
+			
+			/** This is called when the "download spreadsheet button is clicked.
+			 * @param e The event
+			 */
+			private function handleDownloadSummary(e:MouseEvent):void {
+				showURLInPage(URL_DOWNLOAD_SPREADSHEET, PAGE_BLANK);
+			}
+			
+			private function showUploadPage(e:MouseEvent):void {
+				showURL(URL_UPLOAD_SPREADSHEET_PAGE);
+			}
+			
+			private function handleDownloadTodaysLogFile(e:MouseEvent):void {
+				showURL(URL_DOWNLOAD_LOG_FILE + LOG_FILE_NAME_ARG + TODAYS_LOG_FILE_NAME);
+			}
+			
+			private function handleLogFileListItemClick(e:ListEvent):void {
+				var x:XML = m_logFiles[e.rowIndex];;
+				if(x != null) {
+					var name:String = x.text().toString();
+					showURL(URL_DOWNLOAD_LOG_FILE + LOG_FILE_NAME_ARG + name);
+				}
+			}
+			
+			// ------------------------- Log file list --------------
+			
+			/** Requests the list of log files from the server.
+			 */
+			private function loadLogFileList():void {
+				callService(logFileListService, URL_LIST_LOG_FILES);
+			}
+
+			/** This is called back when the log file list data has been loaded.
+			 * It populates the log file list.
+			 * @param e The result event.
+			 */	
+			private function logFileListDataLoaded(e:ResultEvent):void  {
+				setUserInputEnabled(true);
+				if (isResponseOK(e, this)) {
+					var list:XML = e.result as XML;
+					if(list != null) {
+						var fileNames:XML = list[0];
+						m_logFiles = fileNames.fileName;
+					} else {
+						m_logFiles = null;
+					}
+				}
+			}
+			
+			/** This method is called by the loginDataLoader HTTP service
+			 * if it encounters an error.
+			 * @param e The fault event.
+			 */
+			private function logFileListDataLoadError(e:FaultEvent):void {
+				setUserInputEnabled(true);
+				Alert.show(MSG_LOG_LIST_DATA_LOAD_ERROR);
+			}
+
+			
+			// ---------The following needs to go into com.tumri.af.utils.BrowserUtils.as ---------
+			/** Shows the specified URL in the auxilliary browser page.
+			 * @param url The URL string.
+			 */
+			private function showURL(url:String):void {
+				showURLInPage(url, PAGE_AUX);
+			}
+			
+			/** Shows the specified URL in the specified browser page.
+			 * @param url The URL string.
+			 * @param page The browser page.
+			 */
+			private function showURLInPage(url:String, page:String):void {
+				var req:URLRequest = new URLRequest(url);
+				navigateToURL(req, page);
+			}
+			
+			// ------------ The following are copied from TRSMain2 ------------------
+			
+			/** Checks the response of the specified service to see if it is an error.
+			 * If it is an error displayes the appropriate error message to the user.
+			 * @param e The result event.
+			 * @param parent The parent UI component that caused the event or null if not a UI component.
+			 * @return True if the reponse is not an error.
+			 */
+			private function isResponseOK(e:ResultEvent, parent:Sprite):Boolean {
+				var errorObj:XML = e.result as XML;
+				if (errorObj != null && errorObj.name() == ERROR_TAG_NAME) {
+					// handle error
+					var errId:int = errorObj.id;
+					if (errId == HTTP_UNAUTHORIZED) {
+						// logout
+						Alert.show(MSG_SESSION_EXIPIRED, TITLE_SESSION_EXPIRED, Alert.OK, parent, handleSessionExpired);
+					} else if (errId == HTTP_SERVER_ERROR) {
+						// display error 
+						Alert.show(MSG_APPLICATION_ERROR + errorObj.message); 
+					} 
+					return false;
+				}
+				return true;
+			}
+			/** Handles the session expired
+			 * error by redirecting the user to the login page.
+			 * This is called when the session expired error dialog is closed.
+			 * @param ev The close event.
+			 */
+			private static function handleSessionExpired(ev:CloseEvent):void {
+				if (ev.detail == Alert.OK) {
+					var req:URLRequest = new URLRequest(URL_LOGIN); 
+					navigateToURL(req, PAGE_SELF);
+				}
+			}
+			
+			private function logout(event:Event):void {
+				callService(logoutService, URL_LOGOUT);
+			}
+
+			private function logoutSuccess(ev:ResultEvent):void {
+				setUserInputEnabled(true);
+				showURLInPage(URL_LOGIN, PAGE_SELF);
+			}
+			
+			private function logoutFailure(e:FaultEvent):void {
+				setUserInputEnabled(true);
+				showURLInPage(URL_LOGIN, PAGE_SELF);
+			}
+
+			// ------------------ Implementation of UIManager ------------------
+			
+			/** Enables or disables all user input to the application.
+			 * @param enabled True if user input is enabled or false if not.
+			 */
+			public function setUserInputEnabled(enabled:Boolean):void {
+				if(enabled) {
+					--m_disabledCount;
+				} else {
+					++m_disabledCount;
+				}
+				var enableNow:Boolean = (m_disabledCount == 0);
+				this.enabled = enableNow;
+				this.mouseEnabled = enableNow;
+			}
+			
+			/** Determines if user input is enabled.
+			 * @return True if user input is enabled or false if not.
+			 */
+			public function isUserInputEnabled():Boolean {
+				return this.enabled;
+			}
+			
+			// ------------------ Implementation of ErrorHandler ------------------
+			
+			/** This method is called if the user is not authorized.
+			 */
+			public function handleAuthenticationError():void {
+				Alert.show(MSG_SESSION_EXIPIRED, TITLE_SESSION_EXPIRED, Alert.OK, this, handleSessionExpired);
+			}
+			
+			/** This method is called if an application error occurs.
+			 * @param code The application-specific error code.
+			 * @param message The application-specific error message.
+			 */
+			public function handleApplicationError(code:int, message:String):void {
+				Alert.show(MSG_APPLICATION_ERROR + message);
+			}
+
+		]]>
+	</mx:Script>
+	
+	<!-- ========================== Data services ============================ -->
+	
+	<mx:HTTPService id="spreadsheetRefreshService" resultFormat="e4x" method="POST" contentType="application/xml" showBusyCursor="true"
+					result="spreadsheetRefreshSuccess(event);" fault="spreadsheetRefreshFailure(event)" /> 
+
+	<mx:HTTPService id="logoutService" resultFormat="e4x" method="POST" contentType="application/xml" showBusyCursor="true"
+					result="logoutSuccess(event);" fault="logoutFailure(event)" /> 
+
+	<mx:HTTPService id="logFileListService" resultFormat="e4x" method="POST" contentType="application/xml" showBusyCursor="true"
+					result="logFileListDataLoaded(event);" fault="logFileListDataLoadError(event)" /> 
+
+	<!-- =============================== Start of the UI ======================= -->
+	
+	<mx:VBox id="applicationContainer" verticalGap="10" width="100%">
+		<mx:HBox id="topRightBar" width="100%" horizontalAlign="right">
+			<mx:LinkButton id="debugButton" label="Debug" click="handleDebugButtonClicked(event)"/>
+			<mx:LinkButton id="logoutLink" label="LOGOUT" click="logout(event)"/>
+		</mx:HBox>
+		<mx:VBox id="centerBox" width="100%" horizontalAlign="center" verticalGap="20">
+			<mx:VBox id="buttonsBox" horizontalAlign="center">
+				<mx:Button id="refreshButton" label="Run Bidder Now" click="handleRefreshButtonClicked(event)"/>
+				<mx:Spacer height="20"/>
+				<mx:VBox>
+					<mx:Button id="downloadSpreadsheetButton" label="Download Campaign Summary" width="100%" click="handleDownloadSummary(event)"/>		
+					<mx:Button id="goToUploadButton" label="Upload Campaign Summary" width="100%" click="showUploadPage(event)"/>
+				</mx:VBox>
+				<mx:Spacer height="20"/>
+				<mx:VBox id="logFileListBox" width="100%" horizontalAlign="left">
+					<mx:Label id="logFileTitleLabel" text="Log Files:"/>
+					<mx:Button id="downloadTodaysLogsButton" label="Download Today's Log File" width="100%" click="handleDownloadTodaysLogFile(event)"/>
+					<mx:List id="logFileList" dataProvider="{m_logFiles}" rowCount="5" width="100%"
+							 itemClick="handleLogFileListItemClick(event)" />
+					<mx:VBox id="refreshBox" width="100%" horizontalAlign="center">
+						<mx:Button id="refreshLogFileList" label="List Log Files" click="loadLogFileList()"/>
+					</mx:VBox>
+				</mx:VBox>
+			</mx:VBox>			 
+		</mx:VBox>
+	</mx:VBox>
+	
+	
+</mx:Application>

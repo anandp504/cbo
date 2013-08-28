@@ -1,0 +1,117 @@
+# This property refers the application name
+app.name=cbo
+
+# This is seperator in swf file name(appname_vesion number.swf)
+file.name.version.seperator=_
+
+file.extension=swf
+
+# This property is required to install the application
+install.webapp=${install.webapp}
+
+# Tomcat memory allocation
+max.heap.size=${max.heap.size}
+
+# Should we install the cbo database (true or false)
+cbo_db.install.db=${cbo_db.install.db}
+
+# If installing the cbo database this is where to put it.
+cbo_db.host=${cbo_db.host}
+cbo_db.port=${cbo_db.port}
+cbo_db.root.username=${cbo_db.root.username}
+cbo_db.root.password=${cbo_db.root.password}
+
+#property for log4j settings
+log4j.properties=cboLog4j.properties
+
+default.skin=default
+
+app.mode=development
+default.js.mode=min
+default.css.mode=min
+
+# data folder
+com.tumri.cbo.data.dir=${com.tumri.cbo.data.dir}
+
+# logs folder
+com.tumri.cbo.log.dir=${com.tumri.cbo.log.dir}
+
+# The login session timeout in seconds.
+com.tumri.sso.session.timeout=${com.tumri.sso.session.timeout}
+
+# The URL of the LDAP server
+com.tumri.ldap.server.url=${com.tumri.ldap.server.url}
+
+# The LDAP group
+com.tumri.ldap.login.user.authorization.group=${com.tumri.ldap.login.user.authorization.group}
+
+# The LDAP groups for CBO Users and Administrators
+com.tumri.ldap.group.user=${com.tumri.ldap.group.user}
+com.tumri.ldap.group.admin=${com.tumri.ldap.group.admin}
+
+# The authorized browser domain.
+com.tumri.sso.domain=${com.tumri.sso.domain}
+
+
+# Database for bidding history and its results.
+# The URL parameter should include the database name
+# and should not end with a file path separator character.
+driver=com.mysql.jdbc.Driver
+cbo_db.dbname=cbo_db
+cbo_db.url=${cbo_db.url}
+cbo_db.username=${cbo_db.username}
+cbo_db.password=${cbo_db.password}
+cbo_datacleanup_file=${cbo_datacleanup_file}
+cbo_db.db_data_retain_days=${cbo_db.db_data_retain_days}
+logs.log_file_retain_days=${logs.log_file_retain_days}
+cbo_datacleanup.schedule.cronexpression=${cbo_datacleanup.schedule.cronexpression}
+
+# AppNexus 
+# Wget from eit-server01 likes https://api.appnexus.com:443 but the bid optimizer does not work correctly.
+# Only insecure access works for now...
+appnexus.host=${appnexus.host}
+appnexus.port=${appnexus.port}
+appnexus.thread.count=${appnexus.thread.count}
+appnexus.readonly=${appnexus.readonly}
+appnexus.username=${appnexus.username}
+appnexus.password=${appnexus.password}
+appnexus.debug.requests=${appnexus.debug.requests}
+appnexus.debug.json=${appnexus.debug.json}
+appnexus.fetch.history=${appnexus.fetch.history}
+appnexus.update=${appnexus.update}
+
+# Limit to only the following advertisers and campaigns.                                                                                                                                                                      
+# Processes all campaigns if these are set to blank.
+appnexus.advertisers=${appnexus.advertisers}
+appnexus.campaigns=${appnexus.campaigns}
+
+bidder.force.update=${bidder.force.update}
+bidder.execute.bids=${bidder.execute.bids}
+bidder.bid.frequency=${bidder.bid.frequency}
+bidder.debug=${bidder.debug}
+bidder.trace.sql=${bidder.trace.sql}
+bidder.external.url.prefix=${bidder.external.url.prefix}
+bidder.user.message.frequency=${bidder.user.message.frequency}
+bidder.admin.message.frequency=${bidder.admin.message.frequency}
+bidder.min_bid=${bidder.min_bid}
+
+# When CBO detects a new campaign it may decide to automatically
+# change the bidding policy of the campaign to be the
+# Adjustable Daily Impressions bidding policy.
+# The following determines if and when CBO will automatically
+# change the bidding policy.  It can have one of three possible values:
+#   AFTER_DELAY Wait a day before changing the bidding policy.
+#   IMMEDIATE Change the bidding policy as soon as a new campaign is detected.
+#   DO_NOTHING Don't change the bidding policy.
+bidder.new.campaign.bid.imposition.policy=${bidder.new.campaign.bid.imposition.policy}
+
+#======================================================
+# Mail client properties
+#======================================================
+smtp.password=${smtp.password}
+smtp.smtphost=${smtp.smtphost}
+smtp.smtpport=${smtp.smtpport}
+smtp.from=${smtp.from}
+smtp.to=${smtp.to}
+
+

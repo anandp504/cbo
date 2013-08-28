@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<project name="tumri" default="help" basedir=".">
+    <property name="install.src.dir" value="${basedir}"/>   
+    <loadproperties srcfile="${install.src.dir}/cbo/install.properties"/>
+    <loadproperties srcfile="${install.root.dir}/conf/local.properties"/>
+    
+    <property name="top.src.dir" value="."/>
+    <property name="install.root.dir" value="${tumri.home.dir}/${install.component}"/>
+    <property name="install.component.dir" value="${install.root.dir}/${install.component}-${install.component.version}"/>
+    <!-- <property name="install.webapps.dir" value="${install.component.dir}/${tomcat.src.dir}/webapps"/> -->
+    <property name="install.webapps.dir" value="${install.component.dir}/${latest.tomcat.src.dir}/webapps"/>
+        
+    <!-- ****************************************************************** -->
+    
+    <target name="help">
+        <echo message="dummy help target"/>
+    </target>
+
+    <!-- internal use target to perform various initializations -->
+    <target name="deploy-init"
+            depends="">
+        <echo message="Performing initialization steps for deployment"/>    
+        <antcall target="check-local-config" />
+        <antcall target="init-dirs" />          
+    </target>
+    
+    <!-- ****************************************************************** -->    
+
+    <target name="config-tomcat">
+        <echo message="Writing Tomcat configuration..."/>
+        <!-- copy server.xml after string replacement for ports -->
+        <echo message="copying server.xml and setting values..."/>
+        
+         <!-- log4j.properties -->
+         <echo message="copying cboLog4j.properties ..."/>
+         <!-- <replace file="${install.component.dir}/${tomcat.src.dir}/conf/cboLog4j.properties"> -->
+         <replace file="${install.component.dir}/${latest.tomcat.src.dir}/conf/cboLog4j.properties">
+            <replacefilter token="@app-log@" value="${install.root.dir}/logs" />
+         </replace>
+    	
+        <!-- copy crossdomain.xml into the  ${tumri.component.root}/data -->
+        <echo message="copying crossdomain.xml into the  ${tumri.component.root}/data ..."/>
+        <!-- <copy file="${install.component.dir}/${tomcat.src.dir}/conf/crossdomain.xml" -->
+        <copy file="${install.component.dir}/${latest.tomcat.src.dir}/conf/crossdomain.xml" 
+            tofile="${tumri.component.root}/data/crossdomain.xml">
+        </copy>
+    	
+        <!-- copy root_crossdomain.xml into the  ${install.webapps.dir}/ROOT -->
+        <echo message="Creating folder ${install.webapps.dir}/ROOT" />
+        <mkdir dir="${install.webapps.dir}/ROOT"/>
+        <mkdir dir="${install.webapps.dir}/ROOT/WEB-INF"/>
+    	
+        <echo message="copying crossdomain.xml into the  ${tumri.component.root}/ROOT ..."/>
+        <!-- 
+        <copy file="${install.component.dir}/${tomcat.src.dir}/conf/root_crossdomain.xml" 
+            tofile="${install.webapps.dir}/ROOT/crossdomain.xml">
+        </copy> -->
+        <copy file="${install.component.dir}/${latest.tomcat.src.dir}/conf/root_crossdomain.xml" 
+            tofile="${install.webapps.dir}/ROOT/crossdomain.xml"/>
+
+    	<echo message="copying root_web.xml into the  ${tumri.component.root}/ROOT/WEB-INF ..."/>
+    	<!-- 
+        <copy file="${install.component.dir}/${tomcat.src.dir}/conf/root_web.xml" 
+            tofile="${install.webapps.dir}/ROOT/WEB-INF/web.xml">
+        </copy> -->
+        <copy file="${install.component.dir}/${latest.tomcat.src.dir}/conf/root_web.xml" 
+            tofile="${install.webapps.dir}/ROOT/WEB-INF/web.xml"/>
+        
+        <echo message="copying root_index.jsp into the  ${tumri.component.root}/ROOT ..."/>
+        <!--
+        <copy file="${install.component.dir}/${tomcat.src.dir}/conf/root_index.jsp" 
+            tofile="${install.webapps.dir}/ROOT/index.jsp">
+        </copy> -->
+    	<copy file="${install.component.dir}/${latest.tomcat.src.dir}/conf/root_index.jsp" 
+            tofile="${install.webapps.dir}/ROOT/index.jsp"/>
+    </target>
+    
+    <!-- ****************************************************************** -->        
+
+</project>

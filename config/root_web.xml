@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+
+    <!--  This web.xml is to ensure that any access to the application-specific port 
+          without a context path will redirect it to the application.
+     -->
+    <display-name>Collective Bid Optimizer</display-name>
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+</web-app>

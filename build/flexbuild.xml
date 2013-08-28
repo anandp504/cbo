@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="CBO Flex builder" basedir=".." default="flex-compile" 
+    xmlns:antcontrib="antlib:net.sf.antcontrib">
+
+	<!-- NOTE: This script assumes you have the AntContrib tasks defined and ready 
+    	to go in your ant file. See the AntContrib documentation for details -->
+
+    <!-- This is required to fetch the related flexConfig etc
+         TODO: Please think of a better way of organizing things here.
+    -->
+    
+    <!--  temporary import of build.properties -->
+    <!--<property file="build.properties"/>-->
+    
+    <property name="APP_ROOT" value="${basedir}/${flex.app.root}"/>
+	<property name="APP_MODULE_ROOT" value="${basedir}/${flex.module.dir}"/>
+    <property name="DEPLOY_DIR" value="${basedir}/${flex.bin.dir}"/>
+	<property environment="env"/>
+    <property name="FLEX_HOME" value="${flex.sdk.home}"/>
+
+	<!-- project setting -->
+	<property name="APP_CLASSES" value="${basedir}/${flex.classes.dir}" />
+	<property name="APP_MAIN" value="${basedir}/${flex.main.file}" />
+	<property name="WEB_APP_NAME" value="${basedir}/${flex.app.name}" />
+	<property name="swc-dir" value="${basedir}/${flex.libs.dir}" />
+	<property name="background" value="${flex.app.background.color}" />
+	<property name="REPORT" value="${basedir}/${flex.report.dir}" />
+	<property name="FUSION_CHARTS_FOLDER" value="${DEPLOY_DIR}/fusioncharts" />
+	<property name="FUSION_MAPS_FOLDER" value="${DEPLOY_DIR}/fusionmaps" />
+	<property name="FUSION_WIDGETS_FOLDER" value="${DEPLOY_DIR}/fusionwidgets" />
+    <property name="MOCK_DATA_FOLDER" value="${DEPLOY_DIR}/data" />
+
+<!-- Macro - compile the application and module  -->
+    <macrodef name="compile_flex_app">
+   
+		<attribute name="src-file"/>
+		<attribute name="out-file"/>
+		<attribute name="use-network"/>
+
+		<sequential>
+            <echo message="*******************************************"/>
+			<echo message="compile template:@{src-file} use-network:@{use-network}"/>
+			<echo message="compiling MXML file: @{src-file}"/>
+            <echo message="output file: @{out-file}"/>
+            <echo message="APP_CLASSES = ${APP_CLASSES}"/>
+            <echo message="FLEX_LIB_DIR = ${swc-dir}"/>
+            
+            <echo message="*******************************************"/>
+			<mxmlc file="@{src-file}" 
+			    output="@{out-file}"
+			    actionscript-file-encoding="UTF-8"
+			    default-background-color="${background}"
+			    keep-generated-actionscript="true"
+			    use-network="@{use-network}" 
+			    link-report="${REPORT}">
+				<load-config filename="${FLEX_HOME}/frameworks/flex-config.xml" />
+				<source-path path-element="${FLEX_HOME}/frameworks"/>
+				<compiler.source-path path-element="${APP_CLASSES}"/>			
+			    <include-libraries file="${swc-dir}" />
+			 </mxmlc>   
+		</sequential>
+     </macrodef>
+
+	<macrodef name="compile_flex_module">
+	   <attribute name="modules"/>
+	   <attribute name="use-network"/>
+	   <attribute name="out-dir"/>
+
+		<sequential>
+			<echo message="compile modules:@{modules} use-network:@{use-network}"/>
+			<echo message="Module output folder:@{out-dir}"/>
+			<for param="file" >
+				<!-- include all mxml module in build and subidr (ex. /lib) -->
+				<fileset dir="${APP_MODULE_ROOT}" >
+					<include name="**/*.mxml" />
+				</fileset>
+	    	    <sequential>
+					<echo message="- @{file}"/>
+					<mxmlc file="@{file}"
+					    actionscript-file-encoding="UTF-8"
+					    incremental="true"
+					    default-background-color="${background}"
+					    use-network="@{use-network}" 
+					    load-externs="${REPORT}"
+					>
+				    <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml" />
+				    <source-path path-element="${FLEX_HOME}/frameworks"/>
+				    
+				    <!-- source paths --> 
+				    <compiler.source-path path-element="${APP_ROOT}"/>
+				    <compiler.source-path path-element="${APP_CLASSES}"/>
+				    <!-- add here any other  source path -->
+				    
+				    <!-- add external libraries -->
+				    <include-libraries file="${swc-dir}" />
+				    </mxmlc>
+			    </sequential>
+    		</for>
+
+			<!-- move swf module to build dir -->
+			<move todir="@{out-dir}">
+				<fileset dir="${APP_MODULE_ROOT}" >
+		    		<include name="**/*.swf" />
+				</fileset>
+	        </move>
+        </sequential>
+    </macrodef>
+ 
+    <target name="setup">
+        <mkdir dir="${flex.bin.dir}"/>
+    	<mkdir dir="${FUSION_CHARTS_FOLDER}"/>
+    	<mkdir dir="${FUSION_MAPS_FOLDER}"/>
+    	<mkdir dir="${FUSION_WIDGETS_FOLDER}"/>
+        <mkdir dir="${MOCK_DATA_FOLDER}"/>
+    	<!--
+    	<echo message="SYSTEM PROPERTY:FLEX_HOME IS: ${env.FLEX_HOME}"></echo>
+	    <condition property="flex.sdk.home"
+	               value="${FLEX_HOME}"
+	               else="flex.sdk.home">
+	            <isset property="${env.FLEX_HOME}"/>
+	    </condition> 
+    	<echo message="Using Flex home as: ${flex.sdk.home}"></echo> -->
+    </target> 
+
+	<target name="copy-fusion-charts">
+		<!--
+		<copy todir="${FUSION_CHARTS_FOLDER}">
+			<fileset dir="${flex.fusion.charts.folder}"></fileset>
+		</copy>
+		<copy todir="${FUSION_MAPS_FOLDER}">
+			<fileset dir="${flex.fusion.maps.folder}"></fileset>
+		</copy>
+		<copy todir="${FUSION_WIDGETS_FOLDER}">
+			<fileset dir="${flex.fusion.widgets.folder}"></fileset>
+		</copy>
+		<copy todir="${MOCK_DATA_FOLDER}">
+			<fileset dir="${flex.src.dir}/data"></fileset>
+		</copy>
+		-->
+	</target>
+    <!--  invokes the macro targets to compile the main and the module MXML files -->
+    <target name="flex-compile" depends="setup,copy-fusion-charts">
+        <echo message="Flex home - ${FLEX_HOME}"/>
+        <echo message="Flex app root - ${APP_ROOT}"/>
+		<!-- compile main mxml file -->
+		<echo message="Sending input file: ${APP_MAIN}"/>
+        <echo message="Sending output file: ${DEPLOY_DIR}/${flex.app.name}.swf"/>
+		
+		<compile_flex_app src-file="${APP_MAIN}" 
+		  out-file="${DEPLOY_DIR}/${flex.app.name}.swf" 
+		  use-network="true"/>
+		
+    	<move tofile="${DEPLOY_DIR}/${flex.app.name}_${build_version}.swf" file="${DEPLOY_DIR}/${flex.app.name}.swf"/>
+		<!-- compile optimize modules. The module are optimized using Main file-->
+		<!-- <compile_flex_module modules="${APP_ROOT}/module" use-network="true" out-dir="${DEPLOY_DIR}/module/"/> -->
+    </target>  
+
+	<target name="clean">
+		<delete dir="${flex.bin.dir}" />
+	</target>
+
+    <target name="test" depends="setup">
+        <mxmlc file="${flex.main.file}" 
+                output="${flex.bin.dir}/"
+                actionscript-file-encoding="UTF-8"
+                default-background-color="${background}"
+                keep-generated-actionscript="true"
+                use-network="@{use-network}" 
+                link-report="${REPORT}">
+                <load-config filename="${FLEX_HOME}/frameworks/flex-config.xml" />
+                <source-path path-element="${FLEX_HOME}/frameworks"/>
+                <compiler.source-path path-element="${APP_CLASSES}"/>           
+                <include-libraries file="${swc-dir}" />
+             </mxmlc>    
+    </target>
+ </project>

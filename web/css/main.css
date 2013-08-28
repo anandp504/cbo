@@ -1,0 +1,168 @@
+@CHARSET "UTF-8";
+
+.centerContainer
+{
+   width: 400px;
+   margin-top: 50px;
+   margin-right: 100px;
+}
+
+.loginBody {
+   float: left;
+   margin-top: 50px;
+   margin-left: 75px;
+   height: 400px;
+   width: 600px; 
+}
+
+.topContainer {
+	float: right;
+	width: 500px;
+}
+.floatRight {
+	float: right;
+}
+.imageContiner {
+	float:right;
+	height: 40px;
+	width: 500px;
+}
+.titleContainer {
+	float: right;
+	height: 40px;
+	width: 500px;
+}
+.loginWrapper {
+	float: right;
+    height: 400px;
+}
+.login-form {
+	
+	margin-top: 20px;
+	width: 100%;
+}
+
+.errMsg {
+	font-size: 10pt;
+	float: right;
+	height: 100px;
+	width: 400px;
+}
+
+.login-form .nameContainer {
+	float: left;
+	width: 160px;
+}
+
+.login-form .pwdContainer {
+	float: right;
+	width: 160px;
+}
+
+.login-form .submitContainer {
+	float: right;
+}
+
+.login-form .label {
+	font-size: 10pt;
+	width: 150px;
+}
+
+.login-form .submitImg {
+	float: right;
+	margin-top: 10px;
+}
+
+.footer {
+	float:right;
+	font-size: 10pt;
+	text-align: right;
+	text-decoration: underline;
+	height: 20px;
+	width: 100%;
+}
+
+.copy-right {
+	float: right;	
+	height: 5%;
+	margin-top: 8px;
+    text-align: right;
+	width: 100%;
+}
+
+.copy-right .copy-right-label{	
+	font-size: 8pt;
+}
+
+/***** end of login.jsp styles *******/
+
+/** header styles ***/
+.default .header {
+    /*background-image:url(bg_header.gif);*/
+    background-color:#1B3766;
+    background-repeat:repeat-x;
+    height:30px;
+    width:100%;
+    float:left;
+}
+.default .header .wrprLogo { /* Logo*/
+    float:left;
+    width:30%;
+    height:100%;
+}
+.default .wrprLogo .logo {
+    /* margin:1.2em 0 0 1.9em; */
+    margin:0.285em 0 0 1.9em;
+}
+.default .wrprLogo .logo img {
+    /** YOU DONT need this here
+    height:2.6em;
+    width:9.1em;
+    *****/
+}
+.default .header .advData {
+	color:white;
+	float:left;
+	font-family:Verdana;
+	font-size: 11pt;
+	margin-left: 20px;
+	margin-top: 5px;
+}
+.default .header .advName {
+}
+
+.default .header .wrpruserInfo {
+    float:right;
+    font-family: Verdana;
+    font-size: 11pt;
+    height:100%;
+    /* margin:0.285em 1.9em 0 0; */
+    margin-right:12px;
+}
+.default .header .userInfo {/*log info and setting/help*/
+    font-size:0.750em;/*12px*/
+    color:#fff;
+    text-align:right;
+    height:1.666em;/*20px*/
+    width:33.333em;/*400px*/
+    margin:1em 1em 0 0;/*20px 35px 0 0*/
+    display:inline;/*IE hack*/
+}
+.default .userInfo li{
+    display:inline;
+    margin:0 0.083em;
+}
+.default .userInfo li a{
+    color:#fff;
+    text-decoration:none;
+}
+.default .userInfo li a:hover{
+    color:#666;
+}
+.default .userInfo .loginname {
+    font-weight:bold;
+    margin:0 0.25em;
+}
+.default .userInfo .loginname a {
+    color:#fff;
+}

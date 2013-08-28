@@ -1,0 +1,262 @@
+<?xml version="1.0"?>
+<project name="cbo" default="install-cbo" basedir=".">
+
+    <property name="install.src.dir" value="${basedir}"/>   
+    <loadproperties srcfile="${install.src.dir}/cbo/install.properties"/>
+    <property name="component.current.link" value="current"/>
+    <property name="component.previous.link" value="previous"/>
+    <property name="merge.cmd" value="java"/>
+    <property name="file.relink" value="relink"/>
+    <property name="file.service.conf" value="${component.name}.conf"/>
+    <!-- <property name="install.campaign.db.name" value="new_campaign_db"/> -->
+    <property name="install.cbo.db.name" value="cbo_db"/>
+    
+    <echo message="Checking configurable properties which need to be set"/>
+    <fail message="${install.root.dir}/conf/local.properties does not exist. Installation aborted">
+            <condition>
+            <not>
+                <available file="${install.root.dir}/conf/local.properties"/>
+            </not>
+            </condition>
+    </fail>
+    <echo message="${install.root.dir}/conf/local.properties exists. Loading it..."/>
+    <loadproperties srcFile="${install.root.dir}/conf/local.properties"/>
+
+    <!-- ****************************************************************** -->
+
+    <target name="init"
+            depends="">
+        <echo message="creating CBO directories, if they don't exist"/>
+        
+        <mkdir dir="${tumri.component.root}/temp"/>
+        <mkdir dir="${tumri.component.root}/data"/>
+        <mkdir dir="${tumri.component.root}/logs"/>        
+        
+        <mkdir dir="${tumri.component.home}/etc/sysconfig"/>
+        <mkdir dir="${tumri.component.home}/var/run"/>
+        <mkdir dir="${tumri.component.home}/var/proc"/>
+        <mkdir dir="${tumri.component.home}/var/lock/subsys"/>      
+        
+        <chmod perm="+w" type="both">
+            <fileset dir="${tumri.component.root}/logs">
+                <include name="error-logs"/>
+                <include name="event-logs"/>
+            </fileset>
+            <fileset dir="${tumri.component.home}/etc">
+                <include name="sysconfig"/>
+            </fileset>
+            <fileset dir="${tumri.component.home}/var">
+                <include name="run"/>
+                <include name="proc"/>
+                <include name="lock"/>
+            </fileset>          
+        </chmod>
+    </target>
+    
+    <!-- ****************************************************************** -->
+
+    <target name="help"
+            depends=""
+            description="Provide help information.">
+        <exec executable="ant" failonerror="true">
+            <arg line="-p -f ${top.src.dir}/build.xml"/>            
+        </exec> 
+    </target>
+    
+    <!-- ****************************************************************** -->
+    
+    <target name="init-unpack">
+    
+        <gunzip src="${install.src.dir}/${component.product.name}/${component.src1.file}"/>
+        <untar src="${install.src.dir}/${component.product.name}/${component.src1.basename}.tar" dest="${tomcat.home}"/>    <!-- /opt/Tumri/<component>/<component>-<version>/tomcat5 -->          
+        <gunzip src="${install.src.dir}/${component.product.name}/${component.src2.file}"/>
+        <untar src="${install.src.dir}/${component.product.name}/${component.src2.basename}.tar" dest="${tumri.component.home}"/>   <!-- /opt/Tumri/<component>/<component>-<version>/tomcat5 -->
+        <move file="${tomcat.home}/conf/${component.property.file}" todir="${tumri.component.home}" overwrite="yes" preservelastmodified="true"/>
+        <echo> "${tomcat.home}/conf/${component.property.file}" </echo>
+        <exec executable="${merge.cmd}" failonerror="true">
+           <arg line="-jar ${tumri.component.home}/lib/buildtools.jar"/>
+           <arg value="${tumri.component.home}/${component.property.file}"/>
+           <arg value="${install.root.dir}/conf/local.properties"/>
+           <arg value="${tomcat.home}/conf/${component.property.file}"/>
+        </exec>
+        <loadproperties srcfile="${tomcat.home}/conf/${component.property.file}"/>
+        <condition property="is.web.install">
+               <istrue value="${cbo.install.webapp}"/>
+        </condition>
+            
+
+        <condition property="is.db.install">
+             <istrue value="${cbo.cbo_db.install.db}"/>
+        </condition>
+
+    
+     </target>
+        
+    <target name="install-all" depends="init-unpack">
+        <antcall target="web-install"/>
+    	<!--
+        <antcall target="db-install">
+            <param name="db.name" value="${install.campaign.db.name}"/>
+        </antcall>
+        -->
+       	<antcall target="db-install">
+			<param name="db.name" value="${install.cbo.db.name}"/>
+		</antcall>
+    </target>
+
+    <target name="web-install" depends="init" if="is.web.install">
+    
+        <echo>Started Web installing....... </echo>
+
+        <chmod perm="+rx" type="both">
+            <fileset dir="${tumri.component.home}/bin"/>
+        </chmod>
+        <chmod perm="+rx" type="both">
+            <fileset dir="${tumri.component.home}/scripts"/>
+        </chmod>
+        <move file="${tumri.component.home}/bin/${file.relink}" todir="${tomcat.home}/bin" overwrite="yes" preservelastmodified="true"/>
+        <move file="${tumri.component.home}/bin/${file.service.conf}" todir="${tomcat.home}/conf" overwrite="yes" preservelastmodified="true"/>
+    	<echo>About to replace token "${java_mx_parameter}" in ${tomcat.home}/conf/${file.service.conf} with "${cbo.max.heap.size}"</echo>
+        <replace file="${tomcat.home}/conf/${file.service.conf}" token="${java_mx_parameter}" value="${cbo.max.heap.size}"/>
+    	<replace file="${tomcat.home}/conf/${file.service.conf}" token="${tomcat.dir.name}" value="@tomcat.dir.name@"/>
+
+        <!-- Copying both install.xml and install.properties of the installer. -->
+        <mkdir dir="${tumri.component.home}/install/${component.product.name}"/>
+        <copy file="${install.src.dir}/${component.product.name}/install.xml" overwrite="yes" preservelastmodified="true"
+            todir="${tumri.component.home}/install/${component.product.name}"/>
+        <copy file="${install.src.dir}/${component.product.name}/configure.xml" overwrite="yes" preservelastmodified="true"
+            todir="${tumri.component.home}/install/${component.product.name}"/>
+        <copy file="${install.src.dir}/${component.product.name}/install.properties" overwrite="yes" preservelastmodified="true"
+            todir="${tumri.component.home}/install/${component.product.name}"/>
+    	<!--
+        <copy todir="${tumri.component.root}/data/help">
+            <fileset dir="${install.src.dir}/${component.product.name}/help">
+                <include name="*.*"/>
+                <include name="**/*.*"/>
+            </fileset>
+        </copy>
+        -->
+        <!-- Creating a soft link called "current" to the latest installed product. -->
+        <condition property="previous.link.exist" value="true" else="false">
+            <available file="${tumri.component.root}/${component.previous.link}"/>
+        </condition>
+        <condition property="current.link.exist" value="true" else="false">
+            <available file="${tumri.component.root}/${component.current.link}"/>
+        </condition>
+        <exec executable="rm" failonerror="${previous.link.exist}">
+            <arg line="-f ${tumri.component.root}/${component.previous.link}"/>         
+        </exec>
+        <exec executable="mv" failonerror="${current.link.exist}">
+            <arg line="${tumri.component.root}/${component.current.link} ${tumri.component.root}/${component.previous.link}"/>          
+        </exec>
+        <exec executable="ln" failonerror="true">
+            <arg line="-s ${tumri.component.home} ${tumri.component.root}/${component.current.link}"/>          
+        </exec>
+        <!-- Modify component's property file with correct values. -->
+        <ant dir="${install.src.dir}" antfile="cbo/configure.xml"
+             target="config-tomcat" inheritAll="true" inheritRefs="false">
+        </ant>
+    </target>
+
+    <!-- ****************************************************************** -->
+
+    <target name="uninstall" 
+            depends="">
+        <!-- Delete the "current" symlink pointing to the latest installed version and
+             restore the "previous" symlink to "current". -->
+        <exec executable="rm" failonerror="true">
+            <arg line="-f ${tumri.component.root}/${component.current.link}"/>          
+        </exec>
+        <condition property="previous.link.exist" value="true" else="false">
+            <available file="${tumri.component.root}/${component.previous.link}"/> 
+        </condition>
+        <exec executable="mv" failonerror="${previous.link.exist}">
+            <arg line="${tumri.component.root}/${component.previous.link} ${tumri.component.root}/${component.current.link}"/>          
+        </exec>             
+        <delete dir="${tumri.component.home}"/>
+    </target>
+
+    <!-- ****************************************************************** -->
+    <!-- Input parameters: The following parameter or parameters below is/are passed from the top-level install scripts.
+            install.root.dir: ${install.root.dir}   (/opt/Tumri/<component>)
+            install.component.dir: ${install.component.dir}     (/opt/Tumri/<component>/<component>-<version>)
+    -->
+    <target name="install-cbo"
+            depends=""
+            description="Install CBO software.">
+        <antcall target="install-all">
+            <param name="tumri.component.root" value="${install.root.dir}"/>
+            <param name="tumri.component.home" value="${install.component.dir}"/>
+            <!-- FIXME: Use a better way to find where tomcat5 has been installed instead of assuming "${install.component.dir}/tomcat5" -->
+            <!-- <param name="tomcat.home" value="${install.component.dir}/tomcat5"/> -->
+        	<param name="tomcat.home" value="${install.component.dir}/@tomcat.dir.name@"/>
+        </antcall>
+    </target>
+   
+    <!-- ****************************************************************** -->
+    <!-- Input parameter: The following parameter or parameters below is/are passed from the top-level install scripts.
+            install.root.dir: ${install.root.dir}   (/opt/Tumri/<component>)
+            install.component.dir: ${install.component.dir}     (/opt/Tumri/<component>/<component>-<version>)
+    -->
+    <target name="uninstall-cbo" 
+            depends=""
+            description="Uninstall CBO software.">
+        <antcall target="uninstall">
+            <param name="tumri.component.root" value="${install.root.dir}"/>
+            <param name="tumri.component.home" value="${install.component.dir}"/>
+        </antcall>
+    </target>
+
+    <!-- ****************************************************************** -->
+    
+
+    <target name="install-geodb">
+    	<!--
+        <echo>Started  install of GEODB database</echo>
+        <sql driver="${driver}" url="jdbc:mysql://${new_campaign_db.host}:${new_campaign_db.port}/mysql"
+                userid="${new_campaign_db.root.username}" password="${new_campaign_db.root.password}"
+                classpathref="project.db.classpath">
+                DROP DATABASE IF EXISTS geo_db;
+        </sql>
+        <sql driver="${driver}" url="jdbc:mysql://${new_campaign_db.host}:${new_campaign_db.port}/mysql"
+                userid="${new_campaign_db.root.username}" password="${new_campaign_db.root.password}"
+                src="${sql_dir}/../geo_db/create_and_seed_geodb.sql"
+                classpathref="project.db.classpath">
+        </sql>
+        -->
+    </target>
+    
+
+
+    <target name="init-dbinstall" description="Sets the db classapath and groovy task definition">
+	 	<mkdir dir="${tumri.component.home}/db-install"/>
+	        <copy todir="${tumri.component.home}/db-install" file="${tomcat.home}/db-package/db-package.tar.gz" overwrite="true"/>
+	        <gunzip src="${tumri.component.home}/db-install/db-package.tar.gz"/>
+	        <untar src="${tumri.component.home}/db-install/db-package.tar" dest="${tumri.component.home}/db-install"/>
+        	<delete dir="${install.src.dir}/${component.product.name}/db-install" includeEmptyDirs="true"/>
+          <echo>Done DB installing ${db.name}....... </echo>
+	</target>
+
+	<target name="db-install" if="is.db.install">
+
+	        <antcall target="init-dbinstall"/>
+	        <echo>Started DB installing ${db.name}....... </echo>
+	        <path id="project.db.classpath">
+	                <fileset dir="${tumri.component.home}/db-install/lib">
+	                        <include name="**/*.jar"/>
+	                </fileset>
+	        </path>
+	        <property name="sql_dir" value="${tumri.component.home}/db-install/sql/${db.name}" />
+	        <property name="db.install.classpath" refid="project.db.classpath"/>
+	        <taskdef name="groovy" classname="org.codehaus.groovy.ant.Groovy" classpathref="project.db.classpath"/>
+            <echo> "${tomcat.home}/conf/${component.property.file}" </echo>
+	        <loadproperties srcfile="${tomcat.home}/conf/${component.property.file}"/>
+            <loadproperties srcfile="${tumri.component.home}/db-install/conf/cbo_db_version.properties"/>
+
+            <groovy src="${tumri.component.home}/db-install/groovy/DBInstaller.groovy">
+	                <arg line="${db.name}"/>
+	        </groovy>
+
+	</target>
+    
+</project>

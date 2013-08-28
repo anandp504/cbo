@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE taglib PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.1//EN" 
+"http://java.sun.com/j2ee/dtds/web-jsptaglibrary_1_1.dtd">
+<taglib>
+	<tlibversion>1.0</tlibversion>
+	<jspversion>1.1</jspversion>
+	<shortname>tumri-web</shortname>
+	<info>Tumri Tag library for handling consolidation of JS and CSS for web 2.0 applications</info>
+  	<tag>
+    	<name>js</name>
+    	<tagclass>com.tumri.cbo.utils.loader.JSImport</tagclass>
+  			<!-- Body content can have a value of 
+		  	 empty: no body 
+		      JSP: body that is evaluated by container, then possibly processed by the tag 
+		      tagdependent: body is only processed by tag; JSP in body is not evaluated.
+		   -->
+    	<bodycontent>empty</bodycontent>
+    	<info>
+			This tag helps us generate proper script tags in HTML to import required CSS.
+    	</info>
+		<attribute>
+      		<name>packageName</name>
+			<required>true</required>
+			<rtexpvalue>false</rtexpvalue>
+		</attribute>
+		<attribute>
+			<name>moduleName</name>
+			<required>true</required>
+			<rtexpvalue>false</rtexpvalue>
+  		</attribute>
+	</tag>
+	<tag>
+    	<name>css</name>
+    	<tagclass>com.tumri.cbo.utils.loader.CSSImport</tagclass>
+  			<!-- Body content can have a value of 
+		  	 empty: no body 
+		      JSP: body that is evaluated by container, then possibly processed by the tag 
+		      tagdependent: body is only processed by tag; JSP in body is not evaluated.
+		   -->
+    	<bodycontent>empty</bodycontent>
+    	<info>
+			This tag helps us generate proper script tags in HTML to import required CSS.
+    	</info>
+		<attribute>
+      		<name>packageName</name>
+			<required>true</required>
+			<rtexpvalue>false</rtexpvalue>
+		</attribute>
+		<attribute>
+			<name>moduleName</name>
+			<required>true</required>
+			<rtexpvalue>false</rtexpvalue>
+  		</attribute>
+  		<attribute>
+			<name>skin</name>
+			<required>false</required>
+			<rtexpvalue>false</rtexpvalue>
+  		</attribute>
+	</tag>
+</taglib>

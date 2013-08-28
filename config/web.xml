@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app id="CBO">
+
+    <display-name>Collective Bid Optimizer</display-name>
+    <filter>
+        <filter-name>struts2</filter-name>
+        <filter-class>org.apache.struts2.dispatcher.FilterDispatcher</filter-class>
+    </filter>
+    <filter>
+        <filter-name>SecurityFilter</filter-name>
+        <filter-class>com.tumri.af.servlet.filters.SecurityFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>SecurityFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    <!--
+    <filter>
+        <filter-name>DebugFilter</filter-name>
+        <filter-class>com.tumri.af.servlet.filters.DebugFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>DebugFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+    -->
+
+    <!-- Handle FileHeader info filter -->
+    <filter>
+            <filter-name>ResponseHeaderFilter</filter-name>
+            <filter-class>com.tumri.af.servlet.filters.ResponseHeaderFilter</filter-class>
+            <init-param>
+                <param-name>Cache-Control</param-name>
+                <!-- 30 days in secs -->
+                <param-value>2592000</param-value>
+            </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter</filter-name>
+        <url-pattern>*.css</url-pattern>
+    </filter-mapping>
+    
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter</filter-name>
+        <url-pattern>*.js</url-pattern>
+    </filter-mapping>
+    
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter</filter-name>
+        <url-pattern>*.gif</url-pattern>
+    </filter-mapping>   
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter</filter-name>
+        <url-pattern>*.png</url-pattern>
+    </filter-mapping>   
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter</filter-name>
+        <url-pattern>*.jpg</url-pattern>
+    </filter-mapping>   
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter</filter-name>
+        <url-pattern>*.html</url-pattern> 
+    </filter-mapping>   
+    <!--  adding swf to be part of the caching  -->
+    <filter-mapping>
+        <filter-name>ResponseHeaderFilter</filter-name>
+        <url-pattern>*.swf</url-pattern> 
+    </filter-mapping>   
+
+    
+    <!-- GZip Compression filter settings  -->
+    <filter>
+        <filter-name>Compress</filter-name>
+        <filter-class>com.tumri.af.servlet.filters.GZIPFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>Compress</filter-name>
+            <url-pattern>/cbo/*</url-pattern>
+    </filter-mapping>
+    
+    <filter-mapping>
+        <filter-name>Compress</filter-name>
+            <url-pattern>*.js</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>Compress</filter-name>
+            <url-pattern>*.css</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>Compress</filter-name>
+            <url-pattern>*.html</url-pattern>
+    </filter-mapping>
+    <filter-mapping>
+        <filter-name>Compress</filter-name>
+            <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+ 
+    <filter-mapping>
+        <filter-name>struts2</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+	
+	<!-- This sends all references to /cbo/ to the login.jsp page. --> 
+    <welcome-file-list>
+        <welcome-file>/login.jsp</welcome-file>
+    </welcome-file-list>
+
+    <jsp-config>
+	    <taglib>
+	        <taglib-uri>/tumri.tld</taglib-uri>
+	        <taglib-location>/WEB-INF/classes/tumri.tld</taglib-location>
+	    </taglib>
+    </jsp-config>
+
+
+    <servlet>
+        <servlet-name>CBOInit</servlet-name>
+        <servlet-class>com.tumri.cbo.servlets.InitServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>debugZini</servlet-name>
+        <servlet-class>
+            com.tumri.cbo.servlets.ZiniDebugServlet
+        </servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>debugZini</servlet-name>
+        <url-pattern>/secure/zini/debug/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>zini</servlet-name>
+        <servlet-class>
+            com.tumri.cbo.servlets.ZiniServlet
+        </servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>zini</servlet-name>
+        <url-pattern>/secure/zini/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>health-check</servlet-name>
+        <servlet-class>
+            com.tumri.cbo.servlets.HealthCheckServlet
+        </servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>health-check</servlet-name>
+        <url-pattern>/hc</url-pattern>
+    </servlet-mapping>
+
+    <!-- CBO related stuff Ends -->
+</web-app>

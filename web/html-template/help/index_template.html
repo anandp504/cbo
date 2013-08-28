@@ -1,0 +1,640 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Collective Bid Optimizer&reg;: Help</title>
+<link href="css/help.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="logo"></div>
+<div id="wrapper">
+  <table>
+    <tr>
+      <td width="100%">Version ${version}</td>
+      <td align=right width="100%" nowrap=nowrap>[<A HREF="../secure/zini/status/">Server&nbsp;Status</A>]&nbsp;&nbsp;[<A HREF="/cbo/logout.action">Logout</A>]</td>
+    </tr>
+  </table>
+  <h1>Collective Bid Optimizer Help</h1>
+  <p>
+     Contents:
+     <ul>
+       <li><a href="#overview">Overview</a></li>
+       <li><a href="#screens">Screens</a></li>
+       <li><a href="#biddingPolicies">Bidding Policies</a></li>
+     </ul> 
+  </p>
+
+  <hr/>
+
+  <h2><a name="overview"></a>Overview</h2>
+  <p>
+    The Collective Bid Optimizer (CBO) automatically
+    adjusts the bid price for bidding on AppNexus to meet 
+    a specified delivery goal.  It consists of a CBO &quot;bidder&quot; 
+    program to do the bidding, a user interface for managing and 
+    controlling the bidder, and a monitoring program that monitors the 
+    progress of the campaigns that are being bid on. 
+    </p><p>
+    The CBO bidder runs automatically every hour on the hour.  It takes
+    from 30-45 minutes to complete.  During this time
+    the bidder downloads information for <em>all</em> of the 
+    campaigns that are currently on AppNexus, whether or not they 
+    are being optimized, and records this data in a database.
+    When the bidder encounters a campaign 
+    that is being optimized it uses a &quot;bidding policy&quot; to 
+    determine what to do.
+    The bidding policy is specified for each campaign on the CBO dashboard. 
+    The bidding policy may cause the bidder to change the bid price, 
+    change the daily impression limit, or to do nothing depending on its 
+    internal rules. 
+    There is a special bidding policy called <a href="#ecp">ECP</a>
+    that indicates the CBO bidder should leave the bid price adjustments 
+    to AppNexus using the AppNexus Estimated Clearing Price strategy.  Any 
+    campaign whose bidding policy is set to <a href="#ecp">ECP</a> 
+    is considered as not being optimized by the CBO bidder.
+    The bidder only updates the bid type, bid prices,
+    and optionally the daily impression budgets in AppNexus.
+    All other information about the AppNexus campaigns must be managed 
+    manually through the AppNexus UI.
+    </p><p>
+    Please note that because the bidder only runs once an hour, 
+    any change to the bidding policy in the CBO dashboard will not take
+    effect until the next time that the CBO bidder runs at the start of the
+    next hour.
+    </p>
+
+    <h3>Daily Bidding Policies</h3>
+    <p>
+    Currently, the only supported bidding policies
+    adjust a campaign's bid price only once a day.  These daily bidding
+    policies are used because AppNexus supports a daily impression limit that stops 
+    buying impressions after the limit has been reached,
+    and because there is typically a strong cyclical 
+    variation of media demand and impression volume throughout the day.
+    </p><p>
+    The daily bidding policies bid only after all of the data from the
+    previous day is available in AppNexus.  This allows them to
+    set a single bid price for the day, and average over a complete 24 hour
+    cycle.  The current bidding policies determine the bid prices 
+    from just the previous day's worth of data, but more sophisticated
+    bidding policies could be developed to take into account variations
+    across days such as those seen between weekdays and weekends.  
+    </p><p>
+    Note that a &quot;day&quot; in this document means a day starting at midnight
+    in the time zone of the campaign in AppNexus.  
+    Most campaigns run in 
+    &quot;Eastern Time&quot; (ET) which means Eastern Standard Time (EST) 
+    or Eastern Daylight Time (EDT) depending on whether or not daylight 
+    savings time is in effect.
+    </p><p>
+    AppNexus typically takes about 2 hours following the last hour
+    of the day to report all of the results.
+    This means that the results for a given day for a campaign 
+    that serves impressions to the end of the day,
+    will not be available until about about 
+    2 AM the following day (in the time zone of the campaign).  
+    Because of this, the bid prices of
+    most campaigns are adjusted at around 2 AM.  
+    However, for campaigns that hit their daily impression 
+    limit before the end of the day AppNexus may have the total 
+    daily results earlier, so the bidder may bid earlier.  
+    The current bidding policies are only
+    allowed to adjust bid prices between 6 PM and 7 AM in the time zone of 
+    the campaign.  Therefore, most changes that the user makes in the 
+    CBO bid optimizer will not affect the bid price until the 
+    start of the following day.
+    </p><p>
+    See the <a href="#biddingPolicies">Bidding Policies</a> 
+    section for a more detailed
+    description of each of the available bidding polcies.
+  </p>
+  
+  <hr/>
+
+  <h2><a name="screens"></a>Screens</h2>
+   <p>
+   The CBO web application consists of the screens described below.  
+  <ul>
+    <li><a href="#status">Status Screen</a></li>
+    <li><a href="#dashboard">Bidder Dashboard</a></li>
+    <li><a href="#charts">Campaign Performance Charts</a>
+    <li><a href="#changes">Campaign Change History by Advertiser</a>
+    <li><a href="#messages">Show Messages</a>
+  </ul>
+   </p><p>
+   When a user first logs in, the user starts at the status screen which shows
+   the last time the bid optimizer ran and its current state.  
+   The other screens can be navigated to by choosing the desired screen 
+   from the dropdown list on the top of the page.  The name of the current
+   screen is always shown in the center at the top of the screen, and 
+   there are logout and help links at the top right of the screen.
+   Users should log out when they are finished using the CBO application 
+   in order to ensure the highest level of security.
+   </p>
+
+  <h3><a name="status"/></a>Status Screen</h3>
+  <p> The status screen shows the CBO version number, the last time the
+      bidder process was successfully started, the server &quot;health&quot;,
+      and the current state of the bidder if it is currently running.  The
+      bidder state updates every few seconds on the status screen if the
+      bidder is running.  The server is considered healthy if it can contact
+      the CBO database, the user accounts LDAP server, and if the bidder has
+      successfully run within the last 3 hours.
+  </p><p>
+      The bidder should run every hour.  
+      If it has not started within the last hour there might be
+      a problem with either the bidder application or with AppNexus.
+  </p>
+  <h3><a name="dashboard"/></a>Bidder Dashboard Screen</h3>
+  <p> The bidder dashboard screen is the main control point for 
+      managing campaigns.  
+      This screen shows a large table containing information about
+      the campaigns that are currently running on AppNexus. 
+      Note that initially the screen may not show any data because
+      no advertisers are initially selected in the advertiser selector 
+      drop-down when you first get to the screen.  
+      Choose the advertiser whose campaign you want to
+      display or select &quot;All&quot; to show the data for all
+      advertisers.   When there a lot of campaigns on this screen it may take a few
+      seconds to refresh and load.
+      </p><p> 
+      The bidder dashboard screen is where you choose the bidding policy for each
+      campaign.  The screen is mostly read-only except for the bidding
+      policy, max bid, and daily impression limit columns.  If you make
+      any changes on this screen you must press the &quot;save changes&quot;
+      button on the top left of the screen to have the changes take effect.
+      Clicking on any column header in the dashboard screen will sort 
+      the entries in the table by that column. 
+  </p>
+  <h4>Controls</h4>
+  <p>
+      The controls at the top of the dashboard screen include a button 
+      labelled  &quot;Save Changes&quot; to save any changes that you make, a
+      button to download the contents of this screen as a spreadsheet,
+      and drop-downs buttons that allow you to restrict the set of 
+      campaigns shown on the screen by advertiser and bidding policy.
+  </p>
+  <h4><a name="tableCols"></a>Table Columns</h4>
+  <p>
+      Most of the columns in dashboard screen table are 
+      self-explanatory.  They include the AppNexus advertiser and campaign, 
+      but not the AppNexus line item.  We left out the line item for now 
+      since the bidder can only optimize at the campaign level.  
+  </p><p>
+      Clicking on the campaign name will take you to the 
+      <a href="#changes">campaign change history screen</a>
+      to see the changes that have been made on the campaign.  
+      Clicking on the little chart icon to the right of the campaign name 
+      will take you to the
+      <a href="#charts">campaign performance charts screen</a> where you
+      can graph various metrics of the campaign over time.
+  </p><p>
+      After the advertiser and campaign columns come
+      the start and end dates, the daily impression limit,
+      the maximum and current bid CPMs, the bidding policy, 
+      the lifetime impression target, the impressions served to date, 
+      and a projected impressions column that shows how many impressions 
+      the CBO estimates will be served by the end of the campaign.  The 
+      projected impressions column is followed by a column that shows
+      the percentage of the target lifetime impressions that are projected to
+      be served.  This column is color coded to be green for campaigns that are
+      expected to come close to their lifetime impression targets,
+      blue for campaigns that are expected to under-deliver,
+      and red for campaigns that excpected to over-deliver.
+   </p><p>
+      The lifetime impression projection is based on the number of 
+      impressions shown prior to today, plus the impression rate
+      averaged over the time since the last material change was made to
+      the campaign times the amount of time left in the campaign.  
+      Material changes include targeting changes, changes
+      to the campaign lifetime impression targets, and bidding policy changes.
+      The &quot;L/B&quot; (look-back) column is the number of hours since 
+      the last material change.  Its value can be used to infer the level of
+      confidence in the lifetime impressions projections.  
+      Because of the cyclical variablity of the impression rate vs hour 
+      of the day, look-back times less than 24 hours may not lead to very
+      accurate lifetime impression projections.
+   </p><p>
+      The next few columns show the current daily impression target,
+      the number of impressions served yesterday, and a 
+      &quot;Daily Pacing&quot; column that is the ratio of these two
+      as a percentage.
+      The daily pacing column is also color coded using the same color
+      scheme used for the projected lifetime impressions column.
+      Please note that because the daily pacing column is the 
+      impressions served <em>yesterday</em> divided by today's
+      daily impression target, it might not be accurate if the
+      daily impression target was changed significantly since yesterday.
+      Also note that a campaign can be pacing differently on a daily
+      basis than on a lifetime basis.  For example, if a campaign was
+      serving a lot more impressions than needed every day since it
+      started, but a lot fewer impressions than the daily target for
+      today, the campaign could be over-pacing (red) on a lifetime
+      basis while under-pacing (blue) on a daily basis. 
+      </p><p>
+      The final two columns show the total number of impressions served
+      today (up to the last hour that AppNexus processed its data), and
+      a column called &quot;Entropy&quot; that reflects how widely 
+      the impressions were distributed across different web domains.
+      Because AppNexus reports
+      the data for the impressions served today at different times, 
+      we have found that the column containing
+      today&apos;s impressiona served is not very useful except to know
+      that a campaign is serving impressions.
+   </p><p>
+      The entropy column is technically the mathematical entropy of the 
+      distribution of impressions across sites from the previous day.
+      The entropy takes into account both the number of sites and the
+      distribution of impressions across sites, so, for example, a
+      campaign that is serving 90% of its impressions to one site, and
+      distributing the remaining 10% of its impressions to thousands
+      of other sites will have a much lower entropy than a campaign
+      that is serving roughly the same number of impressions to all of
+      its thousands of sites.  For entropy,
+      smaller numbers indicate more narrow distributions and larger
+      numbers indicate broader distributions.  Because of this we have
+      also color coded the entropy colum to be red if the site entropy
+      is small (bad) and green if it is large (good).
+   </p><p>
+      One way to think about the site entropy is as follows:
+      If all impressions were distributed uniformly across 2<sup>n</sup>
+      sites, then the site entropy would be n.  For example, if we
+      distributed impressions uniformly across 8 = 2<sup>3</sup> sites
+      then we would get an entropy of 3.  If we distributed the
+      impressions uniformly across 128 sites then the entropy would
+      be 7 (because 2<sup>7</sup> = 128).
+   </p><p>
+      Because the typical distribution of impressions
+      across sites decreases rapidly as some power-law of the number of
+      sites, we never see a uniform distribution of impressions.  
+      We typically see site entropies of only 6 or 7 even when we
+      are serving impressions to over 1,000+ sites.  
+      Of course, if we distributed all impressions to just one site the
+      entropy would be 0 because 2<sup>0</sup> = 1. 
+      For now, any entropy number less than 3 is considered to be 
+      concerning since it like serving impressions uniformly over
+      only about 8 sites.
+   </p><p>
+   </p><p>
+  </p>
+  <h4>Setting the bidding policies</h4>
+  <p> The dashboard screen is the single place were you control how the bid
+      optimizer works.  First you should select a bidding policy for the
+      campaign from the drop-down list of choices provided.  The details
+      of how these policies work are described in the 
+      <a href="#biddingPolices">bidding policies</a> section.
+   </p><p>
+      If any bidding policy other than <a href="#ecp">ECP</a> is chosen
+      the Max Bid column will be editable and you are required to set a
+      maximum CPM price above which the CBO will not bid. Setting the
+      maximum bid here is required even though there may already be a
+      maximum bid in AppNexus because once the CBO takes control of the bidding
+      AppNexus no longer honors the previous maximum bid price that was 
+      specified when bidding <a href="#ecp">ECP</a>.  
+      If the campaign was previously bidding
+      <a href="#ecp">ECP</a>, the Max Bid column will be defaulted 
+      to the max bid from AppNexus,
+      but because this data is maintained in two different places it can
+      sometimes get confused, so it is extremely important that you check
+      the maximum bid price every time you change the bidding policy.
+  </p><p>
+      If a bidding policy of <a href="#daily">Daily Impressions</a>
+      is chosen, then the daily impression limit column will become editable.  
+      Like the maximum bid, the daily impression limit is set in both
+      AppNexus and in the dashboard.  Therefore the value in this column
+      will default to whatever is currently in AppNexus, and you should
+      confirm this number prior to saving your changes.
+  </p><p>
+      Remember, if you have made any changes on the dashboard screen 
+      you must press the &quot;Save changes&quot; button at the top of 
+      the screen and wait for the screen to reload to ensure that you 
+      have actually saved the changes.  
+      Also note, your changes will not be reflected in AppNexus until 
+      the next time the bidder runs and considers the campaign(s) 
+      that you have changed, so you may want to check back with 
+      AppNexus after an hour or so to make sure it has been correctly updated.
+  </p>
+  <h3><a name="charts"/></a>Campaign Performance Charts Screen</h3>
+  <p> The campaign performance charts screen lets you graph and download
+      the statistics on how the campaign has been performing on an hourly
+      or daily basis.  It lets you select the advertiser and campaign
+      at the top of the chart, the time zone, the time scale, 
+      and the start and end date/times for which you want to graph the data.  
+  </p><p>
+      You select the campaign whose data is to be graphed from the 
+      campaign chooser drop-down control.  If you want to see the data
+      charted for more than one campaign you can check the &quot;Yes&quot;
+      radio button next to the &quot;Multiple campaigns&quot; prompt
+      and this will change the drop-down control into a list from which
+      you can make multiple selections using the usual shift-click or 
+      control-click multi-selection mechanism.
+      The default setting is to allow you to only see one campaign at a 
+      time because showing multiple campaigns with all of their metrics
+      can result in a confusing chart.
+  </p><p>
+      The time zone defaults to the time zone of the campaign in AppNexus,
+      but you can choose a different time zone by clicking on the
+      &quot;Explicit timezone&quot; radio button
+      and by selecting the desired time zone in the corresponding list.
+      Typically you will want to show the data in the time zone that the
+      campaign is running in because the daily impression cap set by
+      AppNexus resets itself at midnight in the time zone of the campaign.
+      Note that if you use an explicit time zone, the time zone will be
+      represented as a fixed hourly offset from GMT and will not change
+      even if there is a change to or from daylight savings time in
+      the middle of the range of data.
+  </p><p>
+      Next you select whether you want hourly or daily data.  There is
+      some support built-in for weekly, monthly, etc but it has not been
+      fully tested.
+  </p><p>
+      After selecting the time scale the page will refresh with the choices
+      of start and end dates/times you can select from.  When the time scale
+      is hourly, the chart will include data that starts at the beginning
+      of selected start hour, up to and including data to the end of the
+      selected end hour.  For example, to select all of the data on an hourly basis 
+      for 6/4/2012 you would set the start and end dates to 
+      2012-06-04, the start hour to 00:00, and the end hour to 23:00.
+      To select all of the data on a daily basis for both 6/4 and 6/5
+      you would select 2012-06-04 as the start date and 2012-06-05 as the end
+      date.  Note that the date format specifies the year-month-day in that order.
+  </p><p>
+      The checkboxes in the measures section of the screen allow you to 
+      choose what metrics you want to be plotted as a function of time.
+      The following metrics are supported:
+      <ul>
+	<li>Impressions Served</li>
+	<li>Impression Target</li>
+        <li>CPM (price paid)</li>
+        <li>Bid price</li>
+        <li>(Site Distriubtion) Entropy</li>
+        <li>Changes</li>
+      </ul>
+  </p><p>
+      The impressions served metric is the actual number of impressions
+      served during the hour or day that starts at the time associated 
+      with the data point.  The impression target metric is the 
+      target number of impressions to be served during the associated day 
+      when a daily time scale is used.
+      If an hourly time scale is used the impression target is the daily
+      target divided by the number of hours in the day.  Both of these
+      metrics are integer values and are plotted against the left Y axis
+      of the chart.
+  </p><p>
+      The CPM metric is the actual price paid in CPM ($/1000 impressions),
+      and the bid price is the bid price in CPM for that hour.  For those 
+      times when the bidding policy is ECP (e.g. CBO is not managing the 
+      bidding) the bid price will be represented as $0.00 on the chart.
+      The CPM and bid price metrics are both plotted against the right Y
+      axis of the chart and are measured in dollars.
+  </p><p>
+    The site distribution entropy metric shows how the impressions were
+    distributed across sites.  See the description of the 
+    <a href="#tableCols">entropy column</a>
+    in the dashboard table for more details on what the site
+    entropy is.  If the site entropy is shown it is plotted against
+    a third Y axis that appears to the right of the graph.
+  </p><p>
+    Finally, you can also choose to plot the times there were changes made
+    to the campaigns on the chart.  These appear as small markers on the
+    chart that can be clicked on to take you to the changes for the campaign
+    on the <a href="#changes">campaign change history screen</a>.
+    </p><p>
+      Normally the chart is shown as a Java Applet at the bottom of the
+      screen.  However, if you do not have Java, the chart can also be
+      displayed as a static image by clicking the "Show Chart as Image"
+      button.  This image can be saved to your local computer for including
+      it in presentations by right-clicking on it after it has finished downloading.
+      You can also download the data that is plotted in the chart
+      as a spreadsheet by clicking the "Download Spreadsheet" button.
+      </p>
+  </p>
+  <h3><a name="changes"/></a>Campaign Change History Screen</h3>
+  <p> The campaign change history screen shows the changes made to campaigns
+      over time as recorded hourly by the CBO bidder.  
+      When you first select the campaign change history screen it shows
+      a list of all of the advertisers in AppNexus.
+      Clicking on an advertiser brings you to a screen that shows the
+      changes sorted first by campaign, and then by date.
+  </p><p>
+      Campaign changes are divided into two types based on the way they are 
+      reported by AppNexus.  These different types of changes are listed 
+      in two columns to the right of the time column on the screen.
+      You may need to scroll your browser window horizontally to see the 
+      second column of changes because often the first column is very wide.
+  </p><p>
+      The leftmost column of the table is the time at which the change was
+      noticed.  Note that this is the time when the CBO bidder program noticed
+      the change, not the time that the change was made in AppNexus.  Because
+      of this, you can only tell that a change was made before this time.
+      The time is displayed in Pacific Time.
+  </p><p>
+      Many of the changes will just be bid price changes, or daily impression
+      target changes made by the CBO bidder.  These are all listed in the left
+      column of the table.  The right column contains changes to targeting.
+      All changes are represented by a red strike-through of the old value
+      with the new value appearing in green immediately to the right of the
+      old value.  Sometimes changes that are shown in the very right column 
+      are reversed (red to green) because of the way AppNexus represents 
+      them internally.
+  </p>
+  <h3><a name="messages"/></a>Show Messages Screen</h3>
+  <p>  The show messages screen allows you to see the messages generated by
+       the monitoring program.  These messages are generated once per day
+       in the early hours of the morning at about 3:30 AM Pacific Time for now.
+       The messages are grouped into two categories:  Warnings and 
+       notifications, and are then grouped alphabetically by advertiser and
+       campaign.
+  </p>
+
+  <hr/>
+
+  <h2><a name="biddingPolicies"></a>Bidding Policies</h2>
+   <p> The various bidding policies are described below.
+       A bidding policy of <a href="#ecp">ECP</a> means that the Collective
+       Bid Optimizer will leave the bidding to AppNexus using the AppNexus
+       &quot;Estimated Clearing Price&quot; policy.
+   </p>
+
+  <ul>
+    <li><a href="#ecp">ECP</a> - AppNexus calculates the bid</li>
+    <li><a href="#daily">Daily Impressions</a> - Targets a specified number of impressions per day</li>
+    <li><a href="#lifetime">Adjustable Daily Impressions</a> - Targets a lifetime impression goal</li>
+  </ul>
+
+  <h3><a name="ecp">ECP Bidding Policy</a></h3>
+  <p> This stands for the &quot;Estimated Clearing Price&quot; policy
+  that is provided by AppNexus.  If selected, AppNexus will compute the bid
+  price required to win most of the bids using the maximum bid price in 
+  AppNexus.  We typically use this policy in conjunction with a 
+  maximum daily impression budget set in AppNexus to make sure a 
+  campaign serves the same number of impressions each day.
+  When a campaign is bidding ECP, the CBO bid optimizer does not 
+  change anything in AppNexus, although it continues to record the 
+  campaign's historical data from the hourly AppNexus downloads.
+  </p>
+  <h3><a name="daily">Daily Impressions Bidding Policy</a></h3>
+  <p> The daily impressions bidding policy attempts to find a bid price in
+  AppNexus that will cause AppNexus to serve exactly the number of
+  impressions specified in the daily impression target 
+  by the end of each day, ideally without hitting the daily impression limit.
+  When this policy is selected the daily impression target field in 
+  the dashboard screen is enabled and the user is expected to fill this
+  in with the desired number of impressions to be served each day.
+  Setting the daily impression target in the CBO dashboard will also
+  set the daily impression budget in AppNexus to the same value.  
+  This will prevent AppNexus from exceeding this target on any given day.
+  </p><p>
+  The daily impressions bidding policy differs from ECP in that 
+  the CBO bidder sets a fixed bid price for the day in AppNexus, 
+  and then every day it attempts to adjust that fixed price 
+  so that it serves just the daily impression target impressions
+  by the end of the day.
+  </p><p>
+  When the user changes the bidding policy from ECP to 
+  daily impressions, the CBO bidder sets the AppNexus bidding type to
+  &quot;fixed price&quot;, the AppNexus bid price to the maximum bid 
+  specified in the CBO dashboard, and the AppNexus daily impression
+  budget to the daily impression target specified in the CBO dashboard.
+  Note again that this change does not occur until the next hour that 
+  the CBO bidder runs following the change in the dashboard.
+  This bid price is then continued throughout the remainder of the day.  
+  If, at the end of the day, the same bid price has been used for more
+  than 80% of the impressions served, then the CBO bidder will adjust the
+  bid price at the start of the next day.  
+  Otherwise, the CBO bidder bids at the maximum bid price for 
+  <em>another full day</em> before considering how to adjust the bid price.
+  Since in most cases the change in bidding policy from ECP to daily impressions 
+  happens in mid-day, the bid price is usually not changed until the
+  end of the <em>day after</em> the day in which the bid price is changed.
+  This gives the bidder the chance to measure the impression rate at
+  the maximum bid price so that it can estimate what bid price will be
+  needed to serve impressions for all 24 hours of the day.  
+  Because the bidder also sets the daily impression budget in AppNexus, 
+  there is no harm in bidding at the maximum bid price since
+  AppNexus will not serve more than the daily impression budget 
+  worth of impressions in any given day.
+  </p><p>
+  The daily impressions bidding policy can save a significant amount 
+  of money over the ECP bidding policy for some campaigns because often the ECP
+  policy bids too high.  
+  The ECP bidding policy serves a consistent number
+  of impressions from day to day for these over-pacing campaigns 
+  because it pays a lot for the bids in the morning and then hits
+  its impression limit sometime in mid-day and stops bidding.
+  The daily impressions policy tries to reduce the bid price so that
+  AppNexus just barely serves the correct number of impressions by the
+  end of the day without going over the limit.
+  </p><p>
+  Consider the following example. Suppose there is a campaign that is running ECP
+  that is paying $1.00 CPM for up to 100,000 impressions per day, and
+  suppose that all of those impressions are being served within the first
+  12 hours of the day.  For this ECP bidding the total cost is $100 per day
+  and there are roughly 100,000/12 = 8,333 impressions served per hour.
+  </p><p>
+  When the bidding policy is changed to the daily impressions target policy,
+  the CBO bidder initially sets a fixed bid price to the maximum bid for the
+  first day.  If the maximum bid is $1.20 CPM then the first day the CBO bidder
+  will also serve 100,000 impressions but perhaps will serve them over just
+  10 hours at a rate of 10,000 impressions per hour at a total cost of $120.
+  However, the next day the bidder will see that a bid price of $1.20 results 
+  in 10,000 impressions per hour (on average) and it will reduce the bid
+  price proportionally to achieve the desired rate of 100,000 impressions
+  in 24 hours:
+  <br/>
+  <center>new CPM = $1.20 (the old CPM) * 4,167 / 10,000 = $0.50</center>
+  <br/>
+  If this estimate is right, we will end up serving 100,000 impressions in 
+  exactly 24 hours at a CPM of $0.50 for $50 total, resulting in a 50% savings over ECP!
+  This cost savings can then persist until the end of the campaign.
+  We have found that such a 50% savings is common for many, but not all,
+  campaigns in AppNexus depending on whether the campaign is able to 
+  deliver all of its daily impressions when bidding the ECP.
+  </p><p>
+  The daily impression target policy has one slight problem, however.
+  It often slightly under-shoots the daily impression target by about 5%.
+  This is because on those days where there are slightly too few impressions
+  available at the computed bid price, we sometimes serve a few less impressions
+  than the daily impression target.
+  However, on those days where there are more than the average number of
+  impressions available at the computed bid price, the number of impressions 
+  served is limited by the daily impression budget set in AppNexus.  Since
+  the AppNexus daily impression budget is the daily impression target, the
+  daily impression target bidding policy sometimes serves too few impressions
+  in a day, but it never serves too many impressions in a day.  The resulting
+  statistical skew results in a slight under-delivery on average in these cases.
+  </p><p>
+  Another slight problem with the daily impressions target policy
+  is that a person has to monitor the campaign manually every day to
+  make sure that the daily impression target is always the correct value
+  that will be required to serve all of the impressions by the end of 
+  the campaign.  This problem, and the undershooting problem are 
+  addressed by the adjustable daily impressions target policy
+  discussed below.
+  </p>
+  <h3><a name="lifetime">Adjustable Daily Impressions Bidding Policy</a></h3>
+  <p>
+  The adjustable daily impressions bidding policy was designed to overcome the
+  slight imperfections in the daily impressions policy.  The adjustable
+  daily impressions policy is the same as the daily impressions policy
+  except that it a) sets the AppNexus daily impression budget (e.g. impression limit)
+  to 125% of the desired daily impression target, and b) re-calculates the daily
+  impressions target each day to ensure that the lifetime impression target
+  goal is met.
+  </p><p>
+  Setting the daily impression limit to 125% of the daily impression target
+  allows the optimizer to go slightly over the target number of impressions
+  in addition to going under the target number of impressions when there 
+  are fluctuations in the impression inventory available at the fixed bid
+  price.  This essentially eliminates the problem of the daily impressions 
+  target under-shooting, while still putting a reasonable daily cap on the number of
+  impressions served per day.
+  </p><p>
+  It is important now to distinguish
+  the daily impression target from the daily impression limit.  In AppNexus
+  these two are the same and are called the daily impression budget.  However,
+  in the CBO these numbers are different.  The daily impression target and
+  daily impression limit are both shown in the CBO dashboard, but when you
+  look at AppNexus the daily impression <em>budget</em> will be the daily
+  impression <em>limit</em> not the daily impression <em>target</em>.
+  </p><p>
+  The second difference in this policy 
+  is to allow the CBO to set the daily impression target.
+  It does this by simply dividing the number of impressions left to be
+  served over the campaign's remaining lifetime by the number of days left
+  in the campaign just before the CBO sets the bid price for the upcoming day.
+  It uses this number as the new daily impression target for the day.
+  </p><p>
+  One consequence of this policy is that changes to the campaign end
+  date or lifetime impression target can radically affect the daily impression
+  target.  When these changes are detected, the CBO makes an exception to its
+  usual rule of not bidding during the middle of the day
+  to adjust the daily impression budget in AppNexus on the next bidder run
+  if necessary.
+  This allows a campaign that may be under-pacing on a lifetime basis, 
+  but that could serve more 
+  impressions on the day of the change, to serve more impressions as 
+  soon as it can without having to wait for the next day.
+  </p><p>
+  <h4>Important Note</h4>
+  In order to use the adjustable daily impressions target policy you must 
+  make sure that the campaign end date and lifetime impression budget
+  values are set correctly in AppNexus.  These values cannot be changed
+  through the CBO dashboard user interface so you will need to log into 
+  the AppNexus console to make these changes.
+  </p><p>
+  Also note that neither of these daily bidding strategies can save money when
+  the campaign is not getting enough impressions at its maximum bid.  Typically
+  both of these strategies end up costing a few percent more than ECP bidding,
+  and serving a few percent more impressions, but the change is not 
+  significant.  The only way to get a campaign to serve more impressions
+  when it is under-pacing at its maximum bid is to either relax the targeting 
+  restrictions or increase the maximum bid price.
+  </p>
+  <hr/>
+   <p>
+   Copyright (c) 2012, Collective Media Inc., All Rights Reserved.
+   </p>
+</div>
+</body>
+</html>

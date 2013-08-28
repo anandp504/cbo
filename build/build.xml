@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<project name="cbo" default="build" basedir="..">
+
+    <!-- The buildconf.properties file MUST be loaded before build.properties.
+         Ideally the order should not matter, but not all directories use
+         buildconf.properties.  To support a transition period we mandate
+         that it must be loaded before build.properties allowing it to take
+         precedence.  See the Tumri/build/default.buildconf.properties for
+         more info.  -->
+
+    <taskdef resource="flexTasks.tasks" classpath="${basedir}/lib/flexTasks.jar" /> 
+	<taskdef resource="net/sf/antcontrib/antlib.xml" classpath="${basedir}/lib/ant-contrib-1.0b3.jar"/>
+	
+    
+    <property name="buildconf.properties" value="../../buildconf.properties"/>
+    
+    <property name="root.dir" value="."/>
+    <property file="${root.dir}/build/build.properties"/>
+    <property file="${root.dir}/build/cbo_version.properties"/>
+    <property name="comp.name" value="cbo-${build_version}"/>
+    <property name="repo.dir" value="${dist.dir}/${comp.name}" /> <!-- destination for all atrifacts which will be .tar.gzed -->
+    <property name="pack.dir" value="${dist.dir}/package" /> <!-- package directory -->
+    <property name="build.content_db.db.name"    value="cbo_db" />
+    <property name="db_package_dir"		   value="${dist.dir}/db-package" />
+    <property name="db_package_archive"    value="${db_package_dir}/db-package" />
+    <property name="db_package_archive_file"    value="db-package" />
+    <property name="sql_dir"    value="sql" />
+    <property name="build.cbo_db.db.name"    value="cbo_db" />
+
+    <fail message="Must configure tree first.">
+        <condition>
+            <not>
+                <available file="${buildconf.properties}"/>
+            </not>
+        </condition>
+    </fail>
+    <property file="${buildconf.properties}"/>
+    <available file="${root.dir}/build/build.properties" type="file" property="build.properties.present"/>
+    <condition property="build.properties.present">
+        <isfalse value="false"/>
+    </condition>
+    <property file="${root.dir}/build/build.properties"/>
+
+    <!-- This property file contains various parameters related to build and release. -->
+    <property file="${root.dir}/build/tar_version.properties"/> 
+
+
+    <import file="cbo.xml"/>
+	<import file="flexbuild.xml"/>
+
+    <!-- ****************************************************************** -->
+
+    <target name="init">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+    	<mkdir dir="${stage.dir}"/>
+    </target>
+
+    <!-- ****************************************************************** -->
+
+    <target name="clean"
+            description="Remove all build objects from the tree.">
+        <delete dir="${dist.dir}"/>
+    	<delete dir="${stage.dir}"/>
+    </target>
+    <!-- ****************************************************************** -->
+
+    <target name="build"
+            depends="clean,init,archive-db-scripts,flex-compile,build-cbo-war,copy-non-java-files"
+            description="Build everything.">
+        <!-- once everything is done prepare the repo -->
+        <antcall target="prepare-repo"/>            
+    </target>
+
+    <!-- ****************************************************************** -->
+
+    <target  name="rice-build" depends="clean,init" description="build cbo.jar.">
+        <antcall  target="build"/>
+        <copy file="${dist.dir}/cbo.jar" todir="${war.install.dir}/cbo/WEB-INF/lib/" />
+        <copy file="${dist.dir}/cbo_applet.jar" todir="${war.install.dir}/cbo/" />
+    </target>
+
+    <!-- ****************************************************************** -->
+
+    <target name="install"
+            description="Install CBO.">
+        
+        <!-- FIXME: Aahhh!  tomcat prefers the unzipped copy of the previous
+         war over the newly installed one.  -->
+        <delete dir="${war.install.dir}/cbo"/>
+        <!-- This used to copy *.war with a fileset but no error is signalled
+         if tar.war doesn't exist.  -->
+        <copy file="${dist.dir}/cbo.war" todir="${war.install.dir}"/>
+        <copy todir="${conf.install.dir}">
+            <fileset dir="${dist.dir}/conf">
+                <include name="*.properties"/>
+                <include name="*.xml"/>
+            </fileset>
+        </copy>
+        <!-- 
+        <copy todir="${common.lib.install.dir}">
+           <fileset dir="${dist.dir}/common/lib">
+               <include name="*.*"/>
+           </fileset>
+        </copy>
+        -->
+    </target>
+
+    <!-- ****************************************************************** -->
+
+    <!-- Targets invoked by the top level build harness don't have
+         descriptions as they're not intended to be manually invoked.  -->
+
+    <target name="top-clean" depends="clean"/>
+
+    <target name="top-build" depends="build"/>
+
+    <target name="top-install" depends="install"/>
+
+    <target name="top-build-doc">
+    </target>
+
+    <target name="top-install-doc">
+    </target>
+
+    <target name="top-run-tests">
+    </target>
+
+</project>

@@ -1,0 +1,30 @@
+#!/bin/sh
+# Small script that will refresh all tomcat jar repositories
+# (c) Nicolas Mailhot, JPackage project 2003
+#
+# 02/22/08 - JMN - Modified to set up Tumri iCornerStore service.
+# 04/07/08 - JMN - Modified for other Tumri product components.
+#
+# -----------------------------------------------------------------------------
+#
+#JMN ICS_HOME=/opt/Tumri/ics/current
+
+if [ -z "$CATALINA_HOME" ]; then
+#    . ${TUMRI_APP_HOME}/tomcat5/conf/${TUMRI_APP}.conf
+	 . ${TUMRI_APP_HOME}/@tomcat.dir.name@/conf/${TUMRI_APP}.conf
+fi
+
+# Load JAVA_HOME
+[ -z "$JAVA_HOME" ] && JAVA_HOME=/usr/lib/jvm/java
+
+export JAVA_HOME
+
+# Relink tomcat jar repositories
+#for repository in $CATALINA_HOME/common/lib $CATALINA_HOME/common/endorsed \
+#                  $CATALINA_HOME/server/lib $CATALINA_HOME/shared/lib ; do
+#    rebuild-jar-repository $repository
+#done
+
+for webapp in $(find $CATALINA_HOME/webapps -mindepth 1 -maxdepth 2 -type d) ; do
+    [ -d "$webapp/WEB-INF/lib" ] && rebuild-jar-repository $webapp/WEB-INF/lib
+done

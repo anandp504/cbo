@@ -1,0 +1,77 @@
+#
+# This file was designed to contain basic information about a build/release such
+# as its version, code label, etc. for the purpose of traceability.
+#
+
+##############################################
+# 
+# Versioning Convention: 
+#      <major_number>.<minor_number>.<maintenance_number>.<build_number> or X.Y.Z.BN
+# whereas
+#      <major_number> or X is the major release number.
+#      <minor_number> or Y is the minor release number.
+#      <maintenance_number> or Z is the maintenance or patch release number.
+#      <build_number> or BN is the build number. 
+#
+# build_candidate: is the type of build. Its values are below. 
+#   1) official: An official build purposed for release/deployment and built by
+#                  the Build/Release Engineering team.
+#   2) engineering: An engineering build purposed for internal development only and
+#                  built by a developer or someone not in the Build/Release Engineering team.
+#   3) development: A build purposed for internal development or testing only (NOT for
+#                  deployment) but built by the Build/Release Engineering team.
+# Its default value is "engineering". For other types, change to the appropriate value.
+#
+# release_candidate: is the type of release. Its values are below. 
+#   1) alpha|beta|eval: A release targeted for alpha, beta, or customer evaluation purpose only and not
+#                   for production deployment.
+#   2) engineering: A release targeted for internal engineering purpose only.
+#   3) <blank>: A release targeted for production deployment purpose (release_candidate=).
+# Its default value is "engineering".
+#
+# release_id: is the n(th) release within the X.Y.Z release milestone. 
+#
+##############################################
+major_number=0
+minor_number=0
+maintenance_number=0
+build_number=1
+
+build_candidate=development
+build_version=${major_number}.${minor_number}.${maintenance_number}.${build_number}
+
+release_candidate=
+release_id=r1
+release_version=${major_number}.${minor_number}.${maintenance_number}_${release_id} ${release_candidate}
+
+##############################################
+#
+# code_label: is the code label in the source code control system (Perforce currently) where a build
+#             produced. It is used to tag the output .jar and/or .war files for traceability.
+# Notes: 
+#    1) For an engineering build, label is not usually created therefore set the code_label variable
+#          to null (ex: code_label=tar_2.5.7.9
+#    2) For an official or a development build where a label is created, set the code_label variable
+#          to the label name (ex: code_label=tar_2.5.7.9
+#    As a result, a file described by the $label_file variable will be packaged into the product
+#          .jar and/or .war files.            
+# 
+##############################################
+code_label=cbo_0.0.0.1
+
+label_file=label_${code_label}.ver
+
+version_properties_file_src=cbo_version.properties
+version_properties_file_dest=cbo_version.properties
+
+##############################################
+# 
+# Other Information
+#
+##############################################
+product_name=Collective Bid Optimizer
+vendor=Collective, Inc.
+
+#
+# End of file.
+#

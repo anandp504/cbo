@@ -1,0 +1,340 @@
+#!/bin/bash
+#
+# This shell script takes care of starting and stopping the application service.
+#
+### BEGIN INIT INFO
+# chkconfig: - 80 20
+# Provides: tomcat5
+# Required-Start: $network $syslog
+# Required-Stop: $network $syslog
+# Default-Start: -
+# Default-Stop: -
+# description: Tomcat 5.5 is the Servlet Engine RI for Servlet 2.4/JSP 2.0
+# processname: ${TUMRI_APP} 
+# pidfile: /var/run/${TUMRI_APP}.pid
+# config: /opt/Tumri/${TUMRI_APP}/current/tomcat5/conf/${TUMRI_APP}.conf
+### END INIT INFO
+#
+# - originally written by Henri Gomez, Keith Irwin, and Nicolas Mailhot
+# - heavily rewritten by Deepak Bhole and Jason Corley
+#
+# 02/12/08 - JMN - Modified based on the /etc/init.d/tomcat5 for Tumri "ics" service.
+# 04/07/08 - JMN - Modified for other Tumri product components.
+# 04/15/13 - Anand - Upgrade tomcat to version 7.0.35
+#
+# -----------------------------------------------------------------------------
+#
+SHELL=bash
+
+NAME="$(basename $0)"
+# The case statements below are not really required however implemented for safety reason 
+# to prevent any human error in naming the service with a name other than one of these below.
+case "$NAME" in
+	cbo)
+			export TUMRI_APP=cbo
+			;;
+esac
+export TUMRI_APP_HOME=/opt/Tumri/${TUMRI_APP}/current
+
+# commented out until the RHEL and FC daemon functions converge
+# Source the function library
+#if [ -r "/etc/rc.d/init.d/functions" ]; then
+    #. /etc/rc.d/init.d/functions
+#fi
+
+unset ISBOOT
+if [ "${NAME:0:1}" = "S" -o "${NAME:0:1}" = "K" ]; then
+    NAME="${NAME:3}"
+    ISBOOT="1"
+fi
+
+# For SELinux we need to use 'runuser' not 'su'
+if [ -x "/sbin/runuser" ]; then
+    SU="/sbin/runuser"
+else
+    SU="su"
+fi
+
+# Get the tomcat config (use this for environment specific settings)
+#TOMCAT_CFG="${TUMRI_APP_HOME}/tomcat5/conf/${TUMRI_APP}.conf"
+TOMCAT_CFG="${TUMRI_APP_HOME}/@tomcat.dir.name@/conf/${TUMRI_APP}.conf"
+if [ -r "$TOMCAT_CFG" ]; then
+    . ${TOMCAT_CFG}
+fi
+
+if [ -r "${TUMRI_APP_HOME}/etc/sysconfig/${NAME}" ]; then
+	. ${TUMRI_APP_HOME}/etc/sysconfig/${NAME}
+fi
+
+# Define which connector port to use
+CONNECTOR_PORT="${CONNECTOR_PORT:-5080}"
+
+#TOMCAT_SCRIPT="${TUMRI_APP_HOME}/bin/dtomcat5"
+TOMCAT_SCRIPT="${TUMRI_APP_HOME}/bin/d@tomcat.dir.name@"
+
+# Path to the script that will refresh jar symlinks on startup
+TOMCAT_RELINK_SCRIPT="${CATALINA_HOME}/bin/relink"
+
+# Tomcat program name
+TOMCAT_PROG="$NAME"
+        
+# Define the tomcat username
+TOMCAT_USER="${TOMCAT_USER:-tomcat}"
+TOMCAT_LOG="${TOMCAT_LOG:-${CATALINA_HOME}/logs/catalina.out}"
+
+RETVAL="0"
+
+# remove when the RHEL and FC daemon functions converge
+# (pulled from /etc/rc.d/init.d/functions)
+function checkpid() {
+    local i
+    for i in $* ; do
+        if [ -d "${TUMRI_APP_HOME}/var/proc/${i}" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# remove when the RHEL and FC daemon functions converge
+# (pulled from /etc/rc.d/init.d/functions)
+function echo_failure() {
+    echo -en "\\033[60G"
+    echo -n "[  "
+    echo -n $"FAILED"
+    echo -n "  ]"
+    echo -ne "\r"
+    return 1
+}
+
+# remove when the RHEL and FC daemon functions converge
+# (pulled from /etc/rc.d/init.d/functions)
+function echo_success() {
+    echo -en "\\033[60G"
+    echo -n "[  "
+    echo -n $"OK"
+    echo -n "  ]"
+    echo -ne "\r"
+    return 0
+}
+
+# Look for open ports, as the function name might imply
+function findFreePorts() {
+    local isSet1="false"
+    local isSet2="false"
+    local isSet3="false"
+    local lower="8000"
+    randomPort1="0"
+    randomPort2="0"
+    randomPort3="0"
+    local -a listeners="( $(
+                        netstat -ntl | \
+                        awk '/^tcp/ {gsub("(.)*:", "", $4); print $4}'
+                    ) )"
+    while [ "$isSet1" = "false" ] || \
+          [ "$isSet2" = "false" ] || \
+          [ "$isSet3" = "false" ]; do
+        let port="${lower}+${RANDOM:0:4}"
+        if [ -z `expr " ${listeners[*]} " : ".*\( $port \).*"` ]; then
+            if [ "$isSet1" = "false" ]; then
+                export randomPort1="$port"
+                isSet1="true"
+            elif [ "$isSet2" = "false" ]; then
+                export randomPort2="$port"
+                isSet2="true"
+            elif [ "$isSet3" = "false" ]; then
+                export randomPort3="$port"
+                isSet3="true"
+            fi
+        fi
+    done
+}
+
+function makeHomeDir() {
+	if [ ! -d "$CATALINA_HOME" ]; then
+		echo "$CATALINA_HOME does not exist, creating"
+		if [ ! -d "${TUMRI_APP_HOME}/var/lib/${NAME}" ]; then
+			mkdir -p ${TUMRI_APP_HOME}/var/lib/${NAME}
+			#cp -pLR ${TUMRI_APP_HOME}/var/lib/tomcat5/* ${TUMRI_APP_HOME}/var/lib/${NAME}
+			cp -pLR ${TUMRI_APP_HOME}/var/lib/@tomcat.dir.name@/* ${TUMRI_APP_HOME}/var/lib/${NAME}
+		fi
+		mkdir -p $CATALINA_HOME ${CATALINA_HOME}/conf ${TUMRI_APP_HOME}/var/cache/${NAME}/temp \
+				${TUMRI_APP_HOME}/var/cache/${NAME}/work ${TUMRI_APP_HOME}/var/log/${NAME}
+		for i in temp work; do
+			ln -fs ${TUMRI_APP_HOME}/var/cache/${NAME}/${i} ${CATALINA_HOME}/${i}
+		done
+		for i in common server shared webapps; do
+			ln -fs ${TUMRI_APP_HOME}/var/lib/${NAME}/${i} ${CATALINA_HOME}/${i}
+		done
+		ln -fs ${TUMRI_APP_HOME}/var/log/${NAME} ${CATALINA_HOME}/logs
+		#cp -pLR ${TUMRI_APP_HOME}/etc/tomcat5/* ${CATALINA_HOME}/conf/
+		cp -pLR ${TUMRI_APP_HOME}/etc/@tomcat.dir.name@/* ${CATALINA_HOME}/conf/
+		#cp -pLR ${TUMRI_APP_HOME}/tomcat5/bin $CATALINA_HOME
+		cp -pLR ${TUMRI_APP_HOME}/@tomcat.dir.name@/bin $CATALINA_HOME
+		#cp -pLR ${TUMRI_APP_HOME}/var/cache/tomcat5/work/* ${CATALINA_HOME}/work/
+		cp -pLR ${TUMRI_APP_HOME}/var/cache/@tomcat.dir.name@/work/* ${CATALINA_HOME}/work/
+		chown ${TOMCAT_USER}:${TOMCAT_USER} ${TUMRI_APP_HOME}/var/log/${NAME}
+	fi
+}
+
+function parseOptions() {
+    options=""
+    options="$options $(
+                 awk '!/^#/ && !/^$/ { ORS=" "; print "export ", $0, ";" }' \
+                 $TOMCAT_CFG
+             )"
+	if [ -r "${TUMRI_APP_HOME}/etc/sysconfig/${NAME}" ]; then
+        options="$options $(
+                     awk '!/^#/ && !/^$/ { ORS=" "; 
+						print "export ", $0, ";" }' \
+						${TUMRI_APP_HOME}/etc/sysconfig/${NAME}
+                 )"
+    fi
+    TOMCAT_SCRIPT="$options $TOMCAT_SCRIPT"
+}
+
+# See how we were called.
+function start() {
+    echo -n "Starting ${TOMCAT_PROG}: "
+	if [ -f "${TUMRI_APP_HOME}/var/lock/subsys/${NAME}" ] ; then
+		if [ -f "${TUMRI_APP_HOME}/var/run/${NAME}.pid" ]; then
+			read kpid < ${TUMRI_APP_HOME}/var/run/${NAME}.pid
+                if checkpid $kpid 2>&1; then
+                    echo "$NAME process already running"
+                        return -1
+                    else
+                        echo "lock file found but no process running for"
+                        echo "pid $kpid, continuing"
+                fi
+        fi
+    fi
+	export CATALINA_PID="${TUMRI_APP_HOME}/var/run/${NAME}.pid"
+    touch $CATALINA_PID
+    chown ${TOMCAT_USER}:${TOMCAT_USER} $CATALINA_PID
+    #if [ "$CATALINA_HOME" != "${TUMRI_APP_HOME}/tomcat5" ]; then
+    if [ "$CATALINA_HOME" != "${TUMRI_APP_HOME}/@tomcat.dir.name@" ]; then
+        # Create a tomcat directory if it doesn't exist
+        makeHomeDir
+        # If CATALINA_HOME doesn't exist modify port number so that
+        # multiple instances don't interfere with each other
+        findFreePorts
+        sed -i -e "s/8005/${randomPort1}/g" -e "s/8080/${CONNECTOR_PORT}/g" \
+            -e "s/8009/${randomPort2}/g" -e "s/8443/${randomPort3}/g" \
+            ${CATALINA_HOME}/conf/server.xml
+    fi
+    $TOMCAT_RELINK_SCRIPT
+#    $SU - $TOMCAT_USER -c "$TOMCAT_SCRIPT start" >> $TOMCAT_LOG 2>&1
+    ${SHELL} -c "$TOMCAT_SCRIPT start" >> $TOMCAT_LOG 2>&1
+    RETVAL="$?"
+    if [ "$RETVAL" -eq 0 ]; then 
+        echo_success
+		touch ${TUMRI_APP_HOME}/var/lock/subsys/${NAME}
+    else
+        echo_failure
+    fi
+    echo
+    return $RETVAL
+}
+
+function status() {
+    RETVAL="1"
+    if [ -f "${TUMRI_APP_HOME}/var/run/${NAME}.pid" ]; then
+        read kpid < ${TUMRI_APP_HOME}/var/run/${NAME}.pid
+        if checkpid $kpid 2>&1; then
+            echo "$0 is already running (${kpid})"
+            RETVAL="0"
+        else
+            echo "lock file found but no process running for pid $kpid"
+        fi
+    else
+        pid="$(pgrep -u tomcat java)"
+        if [ -n "$pid" ]; then
+            echo "$0 running (${pid}) but no PID file exists"
+            RETVAL="0"
+        else
+            echo "$0 is stopped"
+        fi
+    fi
+    return $RETVAL
+}
+
+function stop() {
+    local STOP_VERBOSE="false"
+    echo -n "Stopping $TOMCAT_PROG: "
+	if [ -f "${TUMRI_APP_HOME}/var/lock/subsys/${NAME}" ]; then
+#        $SU - $TOMCAT_USER -c "$TOMCAT_SCRIPT stop" >> $TOMCAT_LOG 2>&1
+		${SHELL} -c "$TOMCAT_SCRIPT stop" >> $TOMCAT_LOG 2>&1
+        RETVAL="$?"
+        if [ "$RETVAL" -eq "0" ]; then
+            count="0"
+			if [ -f "${TUMRI_APP_HOME}/var/run/${NAME}.pid" ]; then
+				read kpid < ${TUMRI_APP_HOME}/var/run/${NAME}.pid
+                until [ "$(ps -p $kpid | grep -c $kpid)" -eq "0" ] || \
+                      [ "$count" -gt "$SHUTDOWN_WAIT" ]; do
+                    if [ "$STOP_VERBOSE" = "true" ]; then
+                        echo -n -e "\nwaiting for processes $kpid to exit"
+                    fi
+                    sleep 1
+                    let count="${count}+1"
+                done
+                if [ "$count" -gt "$SHUTDOWN_WAIT" ]; then
+                    if [ "$STOP_VERBOSE" = "true" ]; then
+                        echo -n -e "\nkilling processes which didn't stop"
+                        echo -n -e "after "
+                        echo -n "$SHUTDOWN_WAIT seconds"
+                    fi
+                    kill -9 $kpid
+                fi
+                echo_success
+                if [ "$count" -gt "0" ]; then
+                    echo -n -e "\n"
+                fi
+            fi
+			rm -f ${TUMRI_APP_HOME}/var/lock/subsys/$NAME ${TUMRI_APP_HOME}/var/run/$NAME.pid   
+        else
+            echo_failure
+        fi
+    fi
+}
+
+# See how we were called.
+case "$1" in
+    start)
+        parseOptions
+        start
+        ;;
+    stop)
+        parseOptions
+        stop
+        ;;
+    restart)
+        parseOptions
+        stop
+        sleep 2    
+        start
+        ;;
+    condrestart)
+        if [ -f "${TUMRI_APP_HOME}/var/run/${NAME}.pid" ]; then
+            parseOptions
+            stop
+            start
+        fi
+        ;;
+    status)
+        status
+        ;;
+    version)
+        parseOptions
+        "${JAVA_HOME}/bin/java" \
+            -classpath "${CATALINA_HOME}/server/lib/catalina.jar" \
+            org.apache.catalina.util.ServerInfo
+        ;;
+    *)
+        echo "Usage: $TOMCAT_PROG {start|stop|restart|condrestart|status|version}"
+        exit 1
+esac
+
+unset TUMRI_APP_HOME
+unset TUMRI_APP
+exit $RETVAL
+

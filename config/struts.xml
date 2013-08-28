@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN" "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+
+	<constant name="struts.enable.DynamicMethodInvocation" value="false" />
+	<!-- <constant name="struts.locale" value="en_US" /> -->
+	<constant name="struts.devMode" value="true" />
+	<constant name="struts.i18n.reload" value="true" />
+	<constant name="struts.multipart.saveDir" value="/opt/Tumri/cbo/temp" />
+	<!-- set the max size to 20 MB -->
+	<constant name="struts.multipart.maxSize" value="20971520"/>
+	
+	<!-- Add packages here -->
+     <package name="default" namespace="/" extends="struts-default">
+        <global-results>
+            <result name="login" type="redirect">/login.jsp</result>
+            <result name="Exception">/secure/view/jsp/common/exception.jsp</result>
+            <result name="invalidUser">/secure/view/jsp/common/timeout.jsp</result>
+            <result name="input">/login.jsp</result>
+        </global-results>
+
+        <global-exception-mappings>
+            <exception-mapping exception="java.lang.Throwable" result="Exception"/>
+        </global-exception-mappings>
+    </package>
+
+	<!-- actions that talk to server code -->
+	<!-- The flex UI will run if the success redirect is to /secure/zini/debug/status/ -->
+	<package name="admin" extends="struts-default, default">
+		<action name="login" class="com.tumri.cbo.struts.actions.CBOLoginAction">
+			<interceptor-ref name="basicStack" />
+			<interceptor-ref name="validation" />
+			<interceptor-ref name="workflow" />
+			<result name="success" type="redirect">/secure/zini/status/</result>
+			<result name="input">/loginError.jsp</result>
+            <result name="error">/loginError.jsp</result>
+            <result name="unauthorized">/loginError.jsp</result>
+		</action>
+        <action name="logout" class="com.tumri.af.struts.actions.sso.LogoutAction">
+            <result name="success">/login.jsp</result>
+            <result name="invalidUser">/loginError.jsp</result>
+            <result name="error">/loginError.jsp</result>
+        </action>
+	</package>
+	
+	<!--  The following were only used for the Flex UI  They are deprecated -->
+	<package name="services" namespace="/secure/services" extends="struts-default, default">
+		<action name="refreshSpreadsheet" class="com.tumri.cbo.struts.actions.RefreshSpreadsheet">
+		    <result name="success">/secure/view/jsp/common/success.jsp</result>
+            <result name="error">/secure/view/jsp/common/error.jsp</result>
+		</action>
+		<action name="getCampaignSummary" class="com.tumri.cbo.struts.actions.GetSpreadsheet">
+		    <result name="success">/secure/view/jsp/common/success.jsp</result>
+            <result name="error">/secure/view/jsp/common/error.jsp</result>
+		</action>
+		<action name="setCampaignSummary" class="com.tumri.cbo.struts.actions.SetSpreadsheet">
+		    <result name="success">/secure/view/jsp/uploadSuccess.jsp</result>
+            <result name="error">/secure/view/jsp/upload.jsp</result>
+		</action>
+		<action name="showZiniObject" class="com.tumri.cbo.struts.actions.ShowZiniObject">
+		    <result name="success">/secure/view/jsp/common/success.jsp</result>
+            <result name="error">/secure/view/jsp/common/error.jsp</result>
+		</action>
+		<action name="getLogFileNames" class="com.tumri.cbo.struts.actions.GetLogFileNames">
+		    <result name="success">/secure/view/jsp/common/success.jsp</result>
+            <result name="error">/secure/view/jsp/common/error.jsp</result>
+		</action>
+		<action name="getLogFile" class="com.tumri.cbo.struts.actions.GetLogFile">
+		    <result name="success">/secure/view/jsp/common/success.jsp</result>
+            <result name="error">/secure/view/jsp/common/error.jsp</result>
+		</action>
+		<action name="getCampaignHistory" class="com.tumri.cbo.struts.actions.GetCampaignPerformanceHistory">
+		    <result name="success">/secure/view/jsp/common/success.jsp</result>
+            <result name="error">/secure/view/jsp/common/error.jsp</result>
+		</action>
+	</package>
+</struts>

@@ -1,0 +1,130 @@
+<project default="deploy" basedir="..">  
+  <property file="development/copywar.properties"/>
+    <target name="java-classes" description="copies the Java classes to the WEB-INF/classes directory" >
+        <echo message="Copying java classes from ${classes.dir} to : ${dist.dir}/WEB-INF/classes"/> 
+        <copy todir="${dist.dir}/WEB-INF/classes" >
+            <fileset dir="${classes.dir}">
+                <!-- dont copy class files. they are already there -->
+                <exclude name="**/*.java" />
+            </fileset>
+        </copy> 
+    </target>
+    <target name="web-assets" description="copies the non-Java code to the application WAR directory" >     
+        <copy todir="${dist.dir}/" >
+            <fileset dir="web"> 
+                <!-- dont copy class files. they are already there -->
+                <exclude name="**/*.class" /> 
+                <exclude name="**/*.java" />
+                <exclude name="**/data/*.jsp" />
+                <exclude name="**/js/*.js" />
+                <exclude name="**/*.js" />
+                <exclude name="**/js/**/*.js" />
+            </fileset>
+        </copy>
+    </target>   
+    
+    <target name="copy-js" description="copies js files into versioned directory" >
+    	
+    	<copy todir="${dist.dir}">
+    		 <fileset dir="web">
+    		 	<include name="fusion/**"/>
+    		 </fileset>
+    	</copy>
+    	<copy todir="${dist.dir}">
+    		 <fileset dir="web/html-template">
+    		    <include name="**/*.*"/>
+    		 </fileset>
+    	</copy>
+    	<delete dir="${dist.dir}/html-template"/>
+    </target>
+    
+    <target name="libs" description="copies the LIBs  code to the WebRoot application directory" >      
+        <copy todir="${dist.dir}/WEB-INF/lib" >
+            <!-- flatten directory structure -->
+            <fileset dir="lib">
+                <exclude name="**/*.class" />
+                <exclude name="**/*.java" />
+                <include name="*.jar" />
+            </fileset>
+        </copy>
+        <copy todir="${dist.dir}/WEB-INF/lib" >
+            <!-- flatten directory structure -->
+        	<!-- DO NOT COPY ALL THE EXT LIBS - MULTIPLE VERSIONS ARE INCLUDED
+            <fileset dir="../ext/lib/java">
+                <exclude name="**/*.class" />
+                <exclude name="**/*.java" /> 
+                <include name="*.jar" />
+            </fileset>
+            -->
+            <fileset dir="${cma.lib.dir}">
+                <include name="${cma.lib.file}"/>
+            </fileset>
+            <fileset dir="${mediabuying.lib.dir}">
+                <include name="${mediabuying.lib.file}"/>
+            </fileset>
+            <fileset dir="${sso.lib.dir}">
+                <include name="${sso.lib.file}" />
+            </fileset>
+            <fileset dir="${utils.lib.dir}">
+                <include name="${utils.lib.file}" />
+            </fileset>
+        </copy>
+    </target>
+    <target name="config">
+        <copy todir="${dist.dir}/WEB-INF/classes" verbose="true">
+            <fileset dir="config">
+                <include name="struts.xml"/>
+                <include name="cbo.properties"/>
+            </fileset>        	
+        </copy>
+        <!-- all *.properties to Tomcat conf directory --> 
+        <copy todir="${appserver.config}" verbose="true">
+            <fileset dir="config">
+                <include name="*.properties"/>
+                <!--<include name="*.xsd"/>-->
+                <exclude name="local.properties"/>
+                <exclude name="cboLog4j.properties"/>
+            </fileset>
+        </copy>
+    </target>
+    <target name="copy-flex-files" description="copies the non-Java code to the application WAR directory" >
+        <copy todir="${dist.dir}" >
+        	<fileset dir="dist/flex" includes="**/*.*"/>
+        </copy>
+    </target>
+    
+    <target name="deploy" description="copies all changed files to TomCat deployment folder" >
+        <mkdir dir="${dist.dir}" />
+        <antcall target="config"/>
+        <antcall target="libs"/>
+        <antcall target="java-classes"/>
+        <antcall target="copy-flex-files"/>
+        <antcall target="web-assets"/>
+        <antcall target="copy-js"/>
+    	<antcall target="version"/>
+    </target>
+	
+	 <!-- ****************************************************************** -->
+	    <!-- A target to generate product version information. -->
+	    <target name="version">
+	        <property file="${root.dir}/build/cbo_version.properties" />
+	        <copy file="${root.dir}/build/${version_properties_file_src}"
+	            tofile="${dist.dir}/WEB-INF/classes/${version_properties_file_dest}" />
+
+	        <!-- Replace all variables in the *_version.properties with actual values. -->
+	        <replace file="${dist.dir}/WEB-INF/classes/${version_properties_file_dest}" >
+	            <replacefilter token="{" value="@" />
+	            <replacefilter token="}" value="@" />
+	        </replace>
+	        <replace file="${dist.dir}/WEB-INF/classes/${version_properties_file_dest}" >
+	            <replacefilter token="$@major_number@" value="${major_number}" />
+	            <replacefilter token="$@minor_number@" value="${minor_number}" />
+	            <replacefilter token="$@maintenance_number@" value="${maintenance_number}" />
+	            <replacefilter token="$@build_number@" value="${build_number}" />
+	            <replacefilter token="$@release_id@" value="${release_id}" />
+	            <replacefilter token="$@release_candidate@" value="${release_candidate}" />
+	            <replacefilter token="$@code_label@" value="${code_label}"  />
+	        </replace>
+	    </target>
+	<property name="root.dir" value="."></property>
+ </project>

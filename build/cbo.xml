@@ -1,0 +1,444 @@
+<?xml version="1.0"?>
+<!-- NOTE WELL: This file is imported into the main build.xml file.
+         It is not intended to work standalone.  -->
+
+<project name="cbo-project" default="no-default" basedir="..">
+    <condition property="need-mock-data">
+        <istrue value="${mock.data}" />
+    </condition>
+    <target name="no-default">
+        <echo>This is a dummy target. No targets in this file is to be invoked directly.</echo>
+    </target>
+    <!-- put the contrib tasks here -->
+
+    <!-- ****************************************************************** -->
+
+    <path id="project.class.path">
+        <fileset dir="${ext.lib.dir}">
+            <include name="commons-beanutils-1.7.0.jar"/>
+            <include name="commons-chain-1.1.jar"/>
+            <include name="commons-codec-1.3.jar"/>
+        	<include name="commons-fileupload-1.2.1.jar"/>
+            <include name="commons-httpclient-3.0-rc2.jar"/>
+        	<include name="commons-io-1.4.jar"/>
+            <include name="commons-lang-2.4.jar"/>
+            <include name="commons-logging.jar"/>
+            <include name="commons-validator-1.3.1.jar"/>
+            <include name="fusionchart_api_1.0.jar"/>
+            <include name="ibatis-sqlmap-2.3.0.jar"/>
+        	<include name="jfreechart-1.0.14/jcommon-1.0.17.jar"/>
+        	<include name="jfreechart-1.0.14/jfreechart-1.0.14.jar"/>
+           	<include name="jmatharray.jar"/>
+           	<include name="jmathplot.jar"/>
+           	<include name="json_simple-1.1.jar"/>
+            <include name="jta.jar"/>
+            <include name="junit-4.4.jar"/>
+            <include name="log4j-1.2.12.jar"/>
+            <include name="mailapi.jar"/>
+            <include name="mongo-2.8.0.jar"/>
+        	<include name="opencsv-2.3.jar"/>
+        	<include name="poi-3.6.jar"/>
+            <include name="quartz-all-1.8.4.jar"/>
+            <include name="serializer-2.7.0.jar"/>
+        	<include name="servlet-api.jar"/>
+            <include name="slf4j-api-1.6.1.jar" />
+            <include name="slf4j-log4j12-1.6.1.jar" />
+            <include name="spring-beans-2.5.jar"/>
+            <include name="spring-core-2.5.jar"/>
+            <include name="spring-context-2.5.jar"/>
+            <include name="spring-ldap-1.3.0.jar"/>
+            <include name="spring-dao.jar"/>
+            <include name="spring-jdbc.jar"/>
+        	<include name="struts2/freemarker-2.3.8.jar"/>
+        	<include name="struts2/ognl-2.6.11.jar"/>
+        	<include name="struts2/struts2-core-2.0.11.jar"/>
+        	<include name="struts2/xwork-2.0.4.jar"/>
+            <include name="xalan-2.7.0.jar"/>
+            <include name="xercesImpl-2.7.0.jar"/>
+            <include name="xml-apis-2.7.0.jar"/>
+            <include name="xstream-1.3.jar"/>
+        </fileset>
+        <fileset dir="${dist.dir}">
+            <include name="*.jar"/>
+        </fileset>
+        <fileset dir="${cma.lib.dir}">
+            <include name="${cma.lib.file}"/>
+        </fileset>
+        <fileset dir="${mediabuying.lib.dir}">
+            <include name="${mediabuying.lib.file}"/>
+        </fileset>
+        <fileset dir="${sso.lib.dir}">
+            <include name="${sso.lib.file}"/>
+        </fileset>
+        <fileset dir="${utils.lib.dir}">
+            <include name="${utils.lib.file}"/>
+        </fileset>
+        <fileset dir="${lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="${config.dir}">
+            <include name="**/*.xml" />
+        </fileset>
+    </path>
+
+    <path id="applet.class.path">
+        <fileset dir="${ext.lib.dir}">
+            <include name="jmatharray.jar"/>
+        	<include name="jmathplot.jar"/>
+        	<include name="jfreechart-1.0.14/jcommon-1.0.17.jar"/>
+        	<include name="jfreechart-1.0.14/jfreechart-1.0.14.jar"/>
+        </fileset>
+    </path>
+    	
+    <target name="build-cbo-jar" depends="version">
+
+    	<!-- includeantruntime is only set to work around an ant 8 bug -->
+        <javac destdir="${classes.dir}"
+        	   includeantruntime="false"    
+               debug="on"
+               optimize="on"
+               includes="**/*.java" 
+        	   nowarn="yes">
+            <src path="${src.dir}"/>
+            <classpath refid="project.class.path"/>
+            <compilerarg value="-Xlint:unchecked"/>
+            <compilerarg value="-Xlint:deprecation"/>
+        </javac>                                                            
+    	
+        <jar destfile="${dist.dir}/cbo.jar">
+            <fileset dir="${classes.dir}"
+                     includes="**/*.class"
+                     excludes="com/tumri/cbo/test/**/*.class"/>
+
+            <!-- Include both *_version.properties and label file. -->
+            <fileset dir="${dist.dir}" includes="${version_properties_file_dest}" />
+            <fileset dir="${dist.dir}" includes="${label_file}" />
+            <!-- TODO - the main class needs to changed once finalized -->
+            <manifest>
+                <attribute name="Main-Class" value="com.tumri.cbo.PlaceHolder"/>
+            </manifest>
+        </jar>
+
+    </target>
+
+    <target name="build-cbo-applet-jar" depends="version">
+
+    	<!-- includeantruntime is only set to work around an ant 8 bug -->
+        <javac destdir="${classes.dir}"
+        	   includeantruntime="false"    
+               debug="on"
+               optimize="on"
+               includes="com/tumri/cbo/applets/**/*.java"
+        	   nowarn="yes">
+            <src path="${src.dir}"/>
+            <classpath refid="applet.class.path"/>
+            <compilerarg value="-Xlint:unchecked"/>
+            <compilerarg value="-Xlint:deprecation"/>
+        </javac>                                                            
+    	
+        <jar destfile="${dist.dir}/cbo_applet.jar">
+            <fileset dir="${classes.dir}"
+                     includes="com/tumri/cbo/applets/**/*.class"
+                     excludes="com/tumri/cbo/test/**/*.class"/>
+
+            <!-- Include both *_version.properties and label file. -->
+            <fileset dir="${dist.dir}" includes="${version_properties_file_dest}" />
+            <fileset dir="${dist.dir}" includes="${label_file}" />
+        </jar>
+
+    </target>
+
+    <target name="copy-non-java-files">
+        <!-- copy the server.xml.template into server.xml -->
+        <copy file="${config.dir}/server.xml" tofile="${dist.dir}/conf/server.xml"/>
+
+        <!-- copy the properties.template into *.properties -->
+        <copy file="${config.dir}/cbo.properties.template" tofile="${dist.dir}/conf/cbo.properties"/>
+        <copy file="${config.dir}/cboLog4j.properties.template" tofile="${dist.dir}/conf/cboLog4j.properties"/>
+        <copy file="${config.dir}/crossdomain.xml" tofile="${dist.dir}/conf/crossdomain.xml"/>
+        <copy file="${config.dir}/root_crossdomain.xml" tofile="${dist.dir}/conf/root_crossdomain.xml"/>
+        <copy  file="${config.dir}/root_web.xml" tofile="${repo.dir}/conf/root_web.xml"/>
+        <copy  file="${config.dir}/root_index.jsp" tofile="${repo.dir}/conf/root_index.jsp"/>
+
+        <!-- copy the other *.template into *.itsOwnExt -->
+        <copy file="${config.dir}/ldap.ks" tofile="${dist.dir}/conf/ldap.ks"/>
+        <copy file="${config.dir}/tomcat_conf_web.xml" tofile="${dist.dir}/conf/web.xml"/>
+
+    </target>
+
+    <target name="build-cbo-war" depends="build-cbo-jar, build-cbo-applet-jar, copy-help, copy-non-java-files">
+        <war destfile="${dist.dir}/cbo.war"
+             webxml="${config.dir}/web.xml">
+            <lib dir="${dist.dir}" includes="cbo.jar"/>
+            <lib dir="${ext.lib.dir}">
+                <include name="commons-beanutils-1.7.0.jar"/>
+                <include name="commons-chain-1.1.jar"/>
+            	<include name="commons-codec-1.3.jar"/>
+                <include name="commons-collections-3.2.jar"/>
+            	<include name="commons-dbcp.jar"/>
+            	<include name="commons-fileupload-1.2.1.jar"/>
+            	<include name="commons-httpclient-3.0-rc2.jar"/>
+            	<include name="commons-io-1.4.jar"/>
+            	<include name="commons-lang-2.4.jar"/>
+            	<include name="commons-logging.jar"/>
+            	<include name="commons-math-1.2.jar"/>
+            	<include name="commons-pool.jar"/>
+            	<include name="commons-validator-1.3.1.jar"/>
+                <include name="fusionchart_api_1.0.jar"/>
+                <include name="ibatis-sqlmap-2.3.0.jar"/>
+                <include name="jmatharray.jar"/>
+                <include name="jmathplot.jar"/>
+            	<include name="json_simple-1.1.jar"/>
+                <include name="jta.jar"/>
+                <include name="log4j-1.2.12.jar"/>
+                <include name="mail.jar"/>
+                <include name="mailapi.jar"/>
+                <include name="mongo-2.8.0.jar"/>
+               	<include name="opencsv-2.3.jar"/>
+               	<include name="poi-3.6.jar"/>
+                <include name="quartz-all-1.8.4.jar"/>
+                <include name="serializer-2.7.0.jar"/>
+                <include name="slf4j-api-1.6.1.jar" />
+                <include name="slf4j-log4j12-1.6.1.jar" />
+                <include name="spring-beans-2.5.jar"/>
+                <include name="spring-core-2.5.jar"/>
+                <include name="spring-context-2.5.jar"/>
+                <include name="spring-ldap-1.3.0.jar"/>
+                <include name="spring-dao.jar"/>
+                <include name="spring-jdbc.jar"/>
+                <include name="xml-apis-2.7.0.jar"/>
+                <include name="xalan-2.7.0.jar"/>
+                <include name="xercesImpl-2.7.0.jar"/>
+            	<include name="xstream-1.3.jar"/>
+                <include name="xpp*.jar"/>
+            </lib>
+        	<lib dir="${ext.lib.dir}/jfreechart-1.0.14">
+        		<include name="jcommon-1.0.17.jar"/>
+        	    <include name="jfreechart-1.0.14.jar"/>
+        	</lib>
+            <lib dir="${lib.dir}" includes="*.jar"/>
+            <lib dir="${sso.lib.dir}" includes="${sso.lib.file}"/>
+            <lib dir="${utils.lib.dir}" includes="${utils.lib.file}"/>
+        	<lib dir="${cma.lib.dir}" includes="${cma.lib.file}"/>
+        	<lib dir="${mediabuying.lib.dir}" includes="${mediabuying.lib.file}"/>
+
+            <classes dir="${config.dir}" includes="struts.xml"/>
+            <classes dir="${config.dir}" includes="cboSpringConfig.xml"/>
+            <classes dir="${config.dir}" includes="tumri.tld"/>
+            <classes dir="${config.dir}" includes="commons-logging.properties"/>
+            <classes dir="${dist.dir}" includes="${version_properties_file_dest}"/>
+
+            <fileset dir="${web.dir}" includes="**/*.*">
+                <!--exclude help section. that is handled seperately -->
+                <exclude name="/view/jsp/help/*.*"/>
+                <exclude name="/view/jsp/help/**/*.*"/>
+                <!--exclude cbo js specific files also, they are handled seperately -->
+                <exclude name="/js/*.js"/>
+                <exclude name="/js/**/*.js"/>
+                <!--exclude swf and swc files also, they are handled seperately -->
+                <exclude name="/flex/**"/>
+                <exclude name="/html-template/**"/>
+            </fileset>
+
+            <fileset dir="${dist.dir}/conf" includes="crossdomain.xml"/>
+            <fileset dir="${dist.dir}/flex" includes="**/*.*"/>
+            <fileset dir="${web.dir}/html-template" includes="**/*.*"/>
+
+            <!-- copy the login related assets into the main folder -->
+            <fileset dir="${web.dir}/assets" includes="*.swf"/>
+        	
+        	<!-- Copy the applet and associated jar files -->
+        	<fileset dir="${dist.dir}" includes="cbo_applet.jar"/>
+        	<fileset dir="${ext.lib.dir}" includes="jmatharray.jar"/>
+        	<fileset dir="${ext.lib.dir}" includes="jmathplot.jar"/>
+        	<fileset dir="${ext.lib.dir}/jfreechart-1.0.14" includes="jcommon-1.0.17.jar"/>
+        	<fileset dir="${ext.lib.dir}/jfreechart-1.0.14" includes="jfreechart-1.0.14.jar"/>
+        </war>
+    </target>
+
+    <!-- ****************************************************************** -->
+    <!-- A target to generate product version information. -->
+    <target name="version">
+        <property file="${root.dir}/build/cbo_version.properties" />
+        <!-- Copy *_version.properties over and create a label file. -->
+        <!--
+          <copy file="${top.root.dir}/build/${version_properties_file_src}"
+              tofile="${dist.dir}/${version_properties_file_dest}" />
+          -->
+        <copy file="${root.dir}/build/${version_properties_file_src}"
+              tofile="${dist.dir}/${version_properties_file_dest}" />
+        <touch file="${dist.dir}/${label_file}" />
+        <echo file="${dist.dir}/${label_file}"># code_label=${code_label}${line.separator} </echo>
+
+        <!-- Replace all variables in the *_version.properties with actual values. -->
+        <replace file="${dist.dir}/${version_properties_file_dest}" >
+            <replacefilter token="{" value="@" />
+            <replacefilter token="}" value="@" />
+        </replace>
+        <replace file="${dist.dir}/${version_properties_file_dest}" >
+            <replacefilter token="$@major_number@" value="${major_number}" />
+            <replacefilter token="$@minor_number@" value="${minor_number}" />
+            <replacefilter token="$@maintenance_number@" value="${maintenance_number}" />
+            <replacefilter token="$@build_number@" value="${build_number}" />
+            <replacefilter token="$@release_id@" value="${release_id}" />
+            <replacefilter token="$@release_candidate@" value="${release_candidate}" />
+            <replacefilter token="$@code_label@" value="${code_label}"  />
+        </replace>
+    </target>
+
+    <!-- prepare the distribution package -->
+
+    <!-- ****************************************************************** -->
+    <target name="copy-config">
+        <echo message="copying the config files into repo"/>
+        <mkdir dir="${repo.dir}/conf" />
+        <copy  file="${config.dir}/server.xml" tofile="${repo.dir}/conf/server.xml"/>
+        <copy  file="${config.dir}/cbo.properties.template" tofile="${repo.dir}/conf/cbo.properties"/>
+        <copy  file="${config.dir}/cboLog4j.properties.template" tofile="${repo.dir}/conf/cboLog4j.properties"/>
+        <copy  file="${config.dir}/crossdomain.xml" tofile="${repo.dir}/conf/crossdomain.xml"/>
+        <copy  file="${config.dir}/root_crossdomain.xml" tofile="${repo.dir}/conf/root_crossdomain.xml"/>
+        <copy  file="${config.dir}/ldap.ks" tofile="${repo.dir}/conf/ldap.ks"/>
+        <copy  file="${config.dir}/tomcat_conf_web.xml" tofile="${repo.dir}/conf/web.xml"/>
+        <copy  file="${config.dir}/root_web.xml" tofile="${repo.dir}/conf/root_web.xml"/>
+        <copy  file="${config.dir}/root_index.jsp" tofile="${repo.dir}/conf/root_index.jsp"/>
+    </target>
+
+    <target name="copy-common-libs">
+        <echo message="copying the common-lib files into ${repo.dir}"/>
+        <!-- <mkdir dir="${repo.dir}/common/lib" /> -->
+        <!-- <copy todir="${repo.dir}/common/lib" overwrite="yes" preservelastmodified="true"> -->
+    	<copy todir="${repo.dir}/lib" overwrite="yes" preservelastmodified="true">
+            <fileset dir="${ext.lib.dir}">
+                <include name="mysql*.jar"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="copy-app">
+        <echo message="copying the application war into repo"/>
+        <copy  file="${dist.dir}/cbo.war" todir="${repo.dir}/webapps"/>
+    </target>
+
+    <target name="copy-deploy-scripts">
+        <echo message="copying deployment scripts"/>
+        <property name="tomcat.install.dir.name" value="tomcat7"/>
+        <copy file="install/install.xml" tofile="${pack.dir}/install.xml"/>
+        <condition property="copy.error"
+                   value="true"
+                   else="false">
+            <available file="install/configure.xml"/>
+        </condition>
+        <copy file="install/configure.xml" tofile="${pack.dir}/configure.xml" failonerror="${copy.error}"/>
+        <copy file="install/install.properties" tofile="${pack.dir}/install.properties"/>
+        <copy  file="${config.dir}/local.properties" tofile="${pack.dir}/local.properties" verbose="true"/>
+        <chmod file="${pack.dir}/*.properties" perm="u+w"/>
+        <!-- now do some string replacement -->
+        <replace file="${pack.dir}/install.xml">
+            <replacefilter token="@version@" value="${build_version}" />
+            <replacefilter token="@tomcat.dir.name@" value="${tomcat.install.dir.name}"/>
+        </replace>
+        <replace file="${pack.dir}/install.properties">
+            <replacefilter token="@version@" value="${build_version}" />
+            <replacefilter token="@tomcat.dir.name@" value="${tomcat.install.dir.name}"/>
+        </replace>
+
+        <!-- copy start/stop scripts and buildtools.jar-->
+        <mkdir dir="${dist.dir}/cbo-install-${build_version}/bin"/>
+        <mkdir dir="${dist.dir}/cbo-install-${build_version}/lib"/>
+        <copy file="../../tas/buildtools/dist/buildtools.jar" todir="${dist.dir}/cbo-install-${build_version}/lib"/>
+        <copy todir="${dist.dir}/cbo-install-${build_version}/bin" overwrite="yes" preservelastmodified="true">
+            <fileset dir="${root.dir}/install/bin">
+                <include name="cbo*"/>
+            </fileset>
+            <filterset begintoken="@" endtoken="@">
+            	<filter token="tomcat.dir.name" value="${tomcat.install.dir.name}"/>
+            </filterset>
+        </copy>
+        
+        <!-- cbo data clean up script -->
+        <mkdir dir="${dist.dir}/cbo-install-${build_version}/scripts"/>
+        <copy file="${sql_dir}/cbodatacleanup.sh" tofile="${dist.dir}/cbo-install-${build_version}/scripts/cbodatacleanup.sh"/>
+        
+        <copy file="${db_package_archive}.tar.gz" todir="${repo.dir}/db-package" overwrite="true"/>
+        <copy file="${root.dir}/install/bin/relink"
+              tofile="${dist.dir}/cbo-install-${build_version}/bin/relink">
+              <filterset begintoken="@" endtoken="@">
+            	<filter token="tomcat.dir.name" value="${tomcat.install.dir.name}"/>
+            </filterset>
+        </copy>
+        <!--
+        <copy file="${root.dir}/install/bin/dtomcat5"
+              tofile="${dist.dir}/cbo-install-${build_version}/bin/dtomcat5"/>
+        -->
+        <copy file="${root.dir}/install/bin/dtomcat5"
+              tofile="${dist.dir}/cbo-install-${build_version}/bin/d${tomcat.install.dir.name}">
+        	<filterset begintoken="@" endtoken="@">
+        		<filter token="tomcat.dir.name" value="${tomcat.install.dir.name}"/>
+        	</filterset>
+        </copy>
+        <tar tarfile="${dist.dir}/cbo-install-${build_version}.tar" basedir="${dist.dir}/cbo-install-${build_version}"/>
+        <gzip zipfile="${pack.dir}/cbo-install-${build_version}.tar.gz" src="${dist.dir}/cbo-install-${build_version}.tar"/>
+        <delete file="${dist.dir}/cbo-install-${build_version}.tar"/>
+
+    </target>
+
+    <target name="copy-help">
+        <java classname="com.tumri.buildtools.version.VersionReplace"
+              fork="yes" >
+            <classpath>
+                <pathelement location="${root.dir}/../buildtools/dist/buildtools.jar"/>
+            </classpath>
+            <sysproperty key="DEBUG" value="true"/>
+            <arg line="${web.dir}/html-template/help/index_template.html"/>
+            <arg line="${web.dir}/html-template/help/index.html"/>
+            <arg line="${build_version}"/>
+        </java>
+    </target>
+
+    <target name="prepare-repo">
+        <echo message="Prepare-repo being executed."/>
+        <antcall target="copy-config" />
+        <antcall target="copy-common-libs"/>
+        <!--<antcall target="copy-help"/> -->
+        <antcall target="copy-app" />
+        <antcall target="copy-deploy-scripts"/>
+        <echo message="preparing the final tar ball : ${pack.dir}/${comp.name}.tar"/>
+        <delete file="${pack.dir}/${comp.name}.tar" quiet="true"/>
+        <delete file="${pack.dir}/${comp.name}.tar.gz" quiet="true"/>
+        <tar destfile="${pack.dir}/${comp.name}.tar">
+            <!-- users can only read these files -->
+            <tarfileset dir="${repo.dir}" mode="444" username="tomcat" group="tomcat">
+                <include name="**/*.*"/>
+                <exclude name="conf/*.*"/>
+            </tarfileset>
+            <!-- configs can be changes after install -->
+            <tarfileset dir="${repo.dir}" mode="644" username="tomcat" group="tomcat">
+                <include name="conf/*.*"/>
+            </tarfileset>
+        </tar>
+        <gzip src="${pack.dir}/${comp.name}.tar" destfile="${pack.dir}/${comp.name}.tar.gz"/>
+        <delete file="${pack.dir}/${comp.name}.tar" quiet="true"/>
+        <echo message="prepared the final tar ball : ${pack.dir}/${comp.name}.tar.gz"/>
+    </target>
+
+    <target name="archive-db-scripts" description="Creates a tar.gz archive containing the DB installation scripts">
+        <echo message="${config.dir}"/>
+        <copy file="${root.dir}/../../install/DBInstaller.groovy" todir="${db_package_dir}/groovy" preservelastmodified="true" overwrite="true"/>
+        <copy file="${config.dir}/cbo_db.properties.template" tofile="${db_package_dir}/conf/cbo_db.properties" />
+        <copy file="${root.dir}/build/cbo_db_version.properties" todir="${db_package_dir}/conf" />
+        <copy todir="${db_package_dir}/sql/${build.cbo_db.db.name}">
+            <fileset dir="${sql_dir}" includes="*.sql" />
+        </copy>
+
+        <copy todir="${db_package_dir}/lib">
+            <fileset dir="${ext.lib.dir}/groovy157" />
+        </copy>
+        <copy file="${ext.lib.dir}/mysql-connector-java-3.1.14-bin.jar" todir="${db_package_dir}/lib" />
+        <tar destfile="${db_package_archive}.tar" basedir="${db_package_dir}" />
+        <gzip src="${db_package_archive}.tar" destfile="${db_package_archive}.tar.gz" />
+        <delete file="${db_package_archive}.tar" />
+        <echo>DB package archived to: ${db_package_archive}.tar.gz</echo>
+
+    </target>
+
+</project>

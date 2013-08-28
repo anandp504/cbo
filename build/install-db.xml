@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<project name="Install CBO Database" default="install" basedir=".">
+
+	<property name="conf_dir"			value="./conf" />
+	<property name="sql_dir"			value="./sql" />
+	<property name="lib_dir"			value="./lib" />
+	<property file="${conf_dir}/install-db.properties" />
+	<property file="${conf_dir}/cbo_db_version.properties" />
+	<property file="${conf_dir}/cbo_db.properties" />
+
+	<path id="project.class.path">
+		<fileset dir="${lib_dir}" includes="**/*.jar" />
+	</path>
+
+	<!-- task definition for Groovy 
+	  Is this needed???
+	<taskdef name="groovy"
+	         classname="org.codehaus.groovy.ant.Groovy"
+	         classpathref="project.class.path" />
+
+	task definition for ANT Contrib 
+	<taskdef resource="net/sf/antcontrib/antlib.xml"
+		classpathref="project.class.path" />
+     -->
+	
+	<target name="install" >
+		<echo>Started install</echo>
+
+		<!-- The code invoked below is written in groovy language -->
+		<groovy src="${basedir}/groovy/DBInstaller.groovy">
+		</groovy>
+
+		<echo>Completed install</echo>
+	</target>
+
+	<target name="fresh-install">
+		<echo>Started fresh install of database</echo>
+
+		<!-- Running the create users and grant priviliges script separately as there
+				would be errors when trying to create users who already exist. 'onerror' attribute here
+				would continue execution even on encountering such errors.  -->
+		<sql driver="${driver}" url="jdbc:mysql://${host}:3306/mysql"
+	  				userid="${username}" password="${password}"
+	  				src="${sql_dir}/cbo_db_prereq.sql"
+	  				classpathref="project.class.path" onerror="continue">
+	  	</sql>
+
+		<for list="cbo_db_objects.sql,cbo_db_seed.sql,cbo_db_update_seed.sql,cbo_db_users_seed.sql" param="sqlFile">
+		  <sequential>
+		  	<sql driver="${driver}" url="jdbc:mysql://${host}:3306/mysql"
+		  				userid="${username}" password="${password}"
+		  				src="${sql_dir}/@{sqlFile}"
+		  				classpathref="project.class.path">
+		  	</sql>
+		  </sequential>
+		</for>
+		<antcall target="install-procedures" />
+		<echo>Completed fresh install of database</echo>
+	</target>
+
+	<target name="update-install">
+		<echo>Started update of database</echo>
+		<for list="cbo_db_update_seed.sql" param="sqlFile">
+		  <sequential>
+		  	<sql driver="${driver}" url="jdbc:mysql://${host}:3306/mysql"
+		  				userid="${username}" password="${password}"
+		  				src="${sql_dir}/@{sqlFile}"
+		  				classpathref="project.class.path">
+		  	</sql>
+		  </sequential>
+		</for>
+		<antcall target="install-procedures" />
+		<echo>Completed update of database</echo>
+	</target>
+
+	<target name="install-procedures">
+	</target>
+
+</project>

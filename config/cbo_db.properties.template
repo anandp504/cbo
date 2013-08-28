@@ -1,0 +1,13 @@
+#Database configuration
+driver = com.mysql.jdbc.Driver
+
+#Example: url = jdbc:mysql://localhost:3306/MY_DATABASE
+url = ${url}
+
+#Example: host = localhost
+host = ${host}
+
+##Example: username = root
+username = ${username}
+
+password = ${password}

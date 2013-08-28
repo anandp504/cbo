@@ -1,0 +1,105 @@
+# CBO build properties
+# N.B.: Properties in this file DO NOT in general change.
+# If you have a parameter that a developer might like to change in the normal
+# course of hacking, put it in buildconf.properties, not here.
+
+# NOTE: cbo.install.dir is defined by buildconf.properties
+
+# directory where the war will be copied
+war.install.dir=${cbo.install.dir}/webapps
+
+# directory where conf files go
+conf.install.dir=${cbo.install.dir}/conf
+
+# tomcat common/lib where jdbc libs reside
+#common.lib.install.dir=${cbo.install.dir}/common/lib
+common.lib.install.dir=${cbo.install.dir}/lib
+
+# root of the source directory
+src.dir=src
+
+# the directory which has all 3rd party JARs
+ext.lib.dir=../ext/lib/java
+int.lib.dir=../int/lib
+
+# The media buying jar
+mediabuying.lib.dir=../int/lib/mediabuying
+mediabuying.lib.file=mediabuying_0.0.2.20.jar
+
+# Media buying lib presently depends on CMA (yuk!)
+cma.lib.dir=../int/lib/cma
+cma.lib.file=cma_2.3.0.22.jar
+
+#the utils jar
+utils.lib.dir=../int/lib/utils
+utils.lib.file=utils_3.0.0.54.jar
+
+# the sso jar
+sso.lib.dir=../int/lib/sso
+sso.lib.file=sso_0.9.1.3.jar
+
+# directory in which the distribution will be created
+dist.dir=dist
+
+# Build staging directory
+stage.dir=stage
+
+# temporary directory to copy generated class files
+classes.dir=${stage.dir}/lib
+
+# Config files directory
+config.dir=config
+
+# Resources directory
+#resources.dir=resources
+
+# Project library directory
+lib.dir=lib
+
+# Web application files directory
+web.dir=web
+
+#do you want to ommit using back-end actions and data-jsp
+mock.data=false
+
+# flex related properties
+# this could be as follows
+#flex.sdk.home=c:/programs/flex_sdk
+#flex.sdk.home=/Users/dinesh/programs/flex_sdk
+flex.sdk.home=/opt/Tumri/flex/current
+flex.app.root=${web.dir}
+
+# project name is used to create swf name (es. MyProject.swf)
+flex.app.name=cbo
+
+#The target directory where application is compiled
+#flex.bin.dir=${dist.dir}/flex/Fusion
+flex.bin.dir=${dist.dir}/flex
+
+# background color compile on swf
+flex.app.background.color=0xFFFFFF
+
+# classes source directory
+#flex.classes.dir=${web.dir}/flex/mxml/
+flex.classes.dir=flex/src
+
+# mxml source directory
+flex.src.dir=flex/src
+
+# mxml source directory
+flex.module.dir=${flex.src.dir}/modules
+
+# swc lib directory
+flex.libs.dir=flex/libs
+
+# mxml source directory
+flex.main.file=${flex.src.dir}/CBOMain.mxml
+
+# template report
+flex.report.dir=${flex.bin.dir}/template-report.xml
+
+# fusion charts swf folders
+flex.fusion.charts.folder=${flex.src.dir}/fusioncharts
+flex.fusion.maps.folder=${flex.src.dir}/fusionmaps
+flex.fusion.widgets.folder=${flex.src.dir}/fusionwidgets
+
