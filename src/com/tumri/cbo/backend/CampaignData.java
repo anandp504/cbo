@@ -2636,6 +2636,7 @@ public class CampaignData {
         
 		if (parent != null) {
 			saveBiddingPolicyAndMaxBid(ident, sctx, qctx);
+			System.out.println("Testing jenkins automatic build trigger with git commit and push");
 		}
         if(currentAdvertiserData != null)
         {
