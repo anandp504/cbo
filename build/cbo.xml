@@ -259,15 +259,18 @@
     <!-- ****************************************************************** -->
     <!-- A target to generate product version information. -->
     <target name="version">
+        <propertyfile file="${root.dir}/build/cbo_version.properties" >
+        	<entry key="build_number" value="${build_number}">
+            	<isset property="build_number"/>
+	        </entry>
+        </propertyfile>
+        
         <property file="${root.dir}/build/cbo_version.properties" />
         <!-- Copy *_version.properties over and create a label file. -->
         <!--
           <copy file="${top.root.dir}/build/${version_properties_file_src}"
               tofile="${dist.dir}/${version_properties_file_dest}" />
           -->
-        <entry key="build_number" value="${build_number}">
-            <isset property="build_number"/>
-        </entry>
         <copy file="${root.dir}/build/${version_properties_file_src}"
               tofile="${dist.dir}/${version_properties_file_dest}" />
         <touch file="${dist.dir}/${label_file}" />
