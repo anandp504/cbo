@@ -260,9 +260,7 @@
     <!-- A target to generate product version information. -->
     <target name="version">
         <propertyfile file="${root.dir}/build/cbo_version.properties" >
-        	<entry key="build_number" value="${build_number}">
-            	<isset property="build_number"/>
-	        </entry>
+        	<entry key="build_number" value="${build_number}"/>
         </propertyfile>
         
         <property file="${root.dir}/build/cbo_version.properties" />
