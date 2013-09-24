@@ -265,6 +265,9 @@
           <copy file="${top.root.dir}/build/${version_properties_file_src}"
               tofile="${dist.dir}/${version_properties_file_dest}" />
           -->
+        <entry key="build_number" value="${build_number}">
+            <isset property="build_number"/>
+        </entry>
         <copy file="${root.dir}/build/${version_properties_file_src}"
               tofile="${dist.dir}/${version_properties_file_dest}" />
         <touch file="${dist.dir}/${label_file}" />
