@@ -260,6 +260,9 @@
     <!-- A target to generate product version information. -->
     <target name="version">
         <propertyfile file="${root.dir}/build/cbo_version.properties" >
+        	<entry key="major_number" value="${major_number}"/>
+        	<entry key="minor_number" value="${minor_number}"/>
+        	<entry key="maintenance_number" value="${maintenance_number}"/>
         	<entry key="build_number" value="${build_number}"/>
         </propertyfile>
         
