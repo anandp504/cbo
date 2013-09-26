@@ -265,6 +265,7 @@
         	<entry key="maintenance_number" value="${maintenance_number}"/>
         	<entry key="build_number" value="${build_number}"/>
         </propertyfile>
+	<replaceregexp file="${root.dir}/build/cbo_version.properties" match="^#.*\r?\n" replace="" flags="g" byline="false"/>
         
         <property file="${root.dir}/build/cbo_version.properties" />
         <!-- Copy *_version.properties over and create a label file. -->
